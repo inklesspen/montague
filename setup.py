@@ -21,8 +21,12 @@ setup(
     name="montague",
     version="0.1.0",
     license="MIT",
-    description="An example package. Replace this with a proper project description. Generated with https://github.com/ionelmc/cookiecutter-pylibrary",
-    long_description="%s\n%s" % (read("README.rst"), re.sub(":obj:`~?(.*?)`", r"``\1``", read("CHANGELOG.rst"))),
+    description=("Montague provides functions to load WSGI apps and servers "
+                 "based on configuration files. "
+                 "It's based on PasteDeploy's INI file support."),
+    long_description="%s\n%s" % (read("README.rst"),
+                                 re.sub(":obj:`~?(.*?)`",
+                                        r"``\1``", read("CHANGELOG.rst"))),
     author="Jon Rosebaugh",
     author_email="jon@inklesspen.com",
     url="https://github.com/inklesspen/montague",
@@ -54,6 +58,7 @@ setup(
     ],
     install_requires=[
         # eg: "aspectlib==1.1.1", "six>=1.7",
+        "six>=1.8.0"
     ],
     extras_require={
         # eg: 'rst': ["docutils>=0.11"],

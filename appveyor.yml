@@ -4,8 +4,6 @@ environment:
     - TOXENV: check
     - TOXENV: "2.7"
     - TOXENV: "2.7-nocover"
-    - TOXENV: "3.4"
-    - TOXENV: "3.4-nocover"
 init:
   - "ECHO %TOXENV%"
   - ps: "ls C:\\Python*"
