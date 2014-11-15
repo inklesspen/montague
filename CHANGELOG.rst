@@ -6,3 +6,4 @@ Changelog
 -----------------------------------------
 
 * First release on PyPI, corresponding to PasteDeploy 1.5.2.
+* Backwards incompatibility: ConfigMiddleware stores the config under ``montague.config`` in the environment instead of ``paste.config`` and no longer offers a threadlocal ``CONFIG`` importable. (This removes the dependency on Paste.)
