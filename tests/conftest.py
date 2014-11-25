@@ -23,5 +23,5 @@ def fakeapp():
 
     working_set.add_entry(os.path.dirname(egg_info_dir))
     require('FakeApp')
-    import fakeapp as fa
-    return fa
+    import fakeapp.apps
+    return fakeapp
