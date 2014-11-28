@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from .compat.loadwsgi import ConfigLoader as CompatConfigLoader
+from six.moves.configparser import InterpolationMissingOptionError
 from .interfaces import IConfigLoader, IConfigLoaderFactory
 from zope.interface import directlyProvides, implementer
 from characteristic import attributes
@@ -18,14 +19,18 @@ class IniConfigLoader(object):
     def _read_from_file(self):
         loader = CompatConfigLoader(self.path)
         parser = loader.parser
-        defaults = parser.defaults()
+        self.defaults = parser.defaults()
         data = {}
         for section in parser.sections():
             section_data = data.setdefault(section, {})
             for option in parser.options(section):
-                if option in defaults:
+                if option in self.defaults:
                     continue
-                section_data[option] = parser.get(section, option)
+                try:
+                    section_data[option] = parser.get(section, option)
+                except InterpolationMissingOptionError:
+                    # TODO, mark this as needing reinterpolation
+                    section_data[option] = parser.get(section, option, raw=True)
         self._data = data
 
     def config(self):

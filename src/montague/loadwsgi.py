@@ -6,6 +6,8 @@ from characteristic import attributes
 from .ini import IniConfigLoader
 from .vendor import reify
 from .structs import LoadableConfig
+from .compat.util import lookup_object
+from .exceptions import UnsupportedPasteDeployFeature
 
 
 scheme_loadable_types = {
@@ -62,17 +64,20 @@ class Loader(object):
                         loadable_type=loadable_type,
                         config=self.config[key]))
             if len(app_configs) == 0:
+                for key in self.config:
+                    key_scheme, key_name = key.split(':')
+                    if key_name == name:
+                        raise UnsupportedPasteDeployFeature(
+                            'The scheme {} is unsupported.'.format(key_scheme))
                 raise Exception('TODO')
             app_config = app_configs[0]
             return app_config
 
-    def load_app(self, name=None):
-        app_config = self.app_config(name)
-        scheme, resource = app_config.config['use'].split(':')
+    def _load_entry_point_factory(self, resource, entry_point_groups):
         pkg, name = resource.split('#')
         entry_point_map = pkg_resources.get_entry_map(pkg)
         factory = None
-        for group in app_config.entry_point_groups:
+        for group in entry_point_groups:
             if group in entry_point_map:
                 group_map = entry_point_map[group]
                 if name in group_map:
@@ -80,7 +85,30 @@ class Loader(object):
                     break
         if factory is None:
             raise Exception('TODO')
-        return factory({}, **app_config.config)
+        return factory
+
+    def _load_call_factory(self, resource):
+        return lookup_object(resource)
+
+    def load_app(self, name=None, global_conf=None):
+        app_config = self.app_config(name)
+        scheme, resource = app_config.config['use'].split(':', 1)
+        if scheme in {'egg', 'package'}:
+            factory = self._load_entry_point_factory(
+                resource, app_config.entry_point_groups)
+        elif scheme == 'call':
+            factory = self._load_call_factory(resource)
+        else:
+            raise Exception('TODO: scheme type {}'.format(scheme))
+        local_conf = dict(app_config.config)
+        del local_conf['use']
+        if global_conf is None:
+            global_conf = {}
+        if app_config.loadable_type == 'composite':
+            return factory(self, global_conf, **local_conf)
+        return factory(global_conf, **local_conf)
+
+    get_app = load_app
 
 
 def _get_suffix(path):
