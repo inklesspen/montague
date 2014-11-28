@@ -1,6 +1,6 @@
 import os
 from montague.ini import IniConfigLoader
-from montague.loadwsgi import load_app
+from montague import load_app
 
 here = os.path.dirname(__file__)
 
