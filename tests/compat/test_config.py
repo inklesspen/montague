@@ -14,7 +14,7 @@ def test_config_egg(fakeapp):
     assert isinstance(app, fakeapp.configapps.SimpleApp)
 
 
-def test_config1():
+def test_config1(fakeapp):
     app = loadapp(ini_file, relative_to=here, name='test1')
     assert app.local_conf == {
         'setting1': 'foo',
@@ -28,7 +28,7 @@ def test_config1():
         '__file__': config_filename}
 
 
-def test_config2():
+def test_config2(fakeapp):
     app = loadapp(ini_file, relative_to=here, name='test2')
     assert app.local_conf == {
         'local conf': 'something'}
@@ -41,7 +41,7 @@ def test_config2():
         '__file__': config_filename}
     # Run this to make sure the global-conf-modified test2
     # didn't mess up the general global conf
-    test_config1()
+    test_config1(fakeapp)
 
 
 def test_config3(fakeapp):
@@ -57,7 +57,7 @@ def test_config3(fakeapp):
         'another': 'TEST',
         'here': config_path,
         '__file__': config_filename}
-    test_config2()
+    test_config2(fakeapp)
 
 
 def test_main(fakeapp):
