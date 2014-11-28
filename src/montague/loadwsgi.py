@@ -93,7 +93,7 @@ class Loader(object):
     def load_app(self, name=None, global_conf=None):
         app_config = self.app_config(name)
         scheme, resource = app_config.config['use'].split(':', 1)
-        if scheme in {'egg', 'package'}:
+        if scheme in ('egg', 'package'):
             factory = self._load_entry_point_factory(
                 resource, app_config.entry_point_groups)
         elif scheme == 'call':

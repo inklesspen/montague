@@ -268,7 +268,7 @@ def loadapp(uri, name=None, **kw):
                 if key.startswith('get ') or key.startswith('set '):
                     # stupid interaction with defaults, fall back
                     fallback = True
-                if key in {'filter-with'}:
+                if key in ('filter-with'):
                     # filter-app not supported
                     fallback = True
         if not fallback:
