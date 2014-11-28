@@ -68,7 +68,7 @@ class Loader(object):
                     key_scheme, key_name = key.split(':')
                     if key_name == name:
                         raise UnsupportedPasteDeployFeature(
-                            'The scheme {} is unsupported.'.format(key_scheme))
+                            'The scheme {0} is unsupported.'.format(key_scheme))
                 raise Exception('TODO')
             app_config = app_configs[0]
             return app_config
