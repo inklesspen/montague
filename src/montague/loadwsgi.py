@@ -18,7 +18,7 @@ scheme_loadable_types = {
 }
 
 loadable_type_entry_points = {
-    'app': ['montague.app_factory', 'paste.app_factory'],
+    'app': ['paste.app_factory'],
     'composite': ['paste.composite_factory', 'paste.composit_factory'],
 }
 
