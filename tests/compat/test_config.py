@@ -19,7 +19,7 @@ def test_config1(fakeapp):
     assert app.local_conf == {
         'setting1': 'foo',
         'setting2': 'bar',
-        'apppath': os.path.join(config_path, 'app')}
+        'apppath': '/'.join([config_path, 'app'])}  # ini hardcodes /
     assert app.global_conf == {
         'def1': 'a',
         'def2': 'b',
@@ -163,4 +163,6 @@ def test_interpolate_exception():
     with pytest.raises(Exception) as excinfo:
         appconfig('config:test_error.ini', relative_to=config_path)
     expected = "Error in file %s" % os.path.join(config_path, 'test_error.ini')
+    # _loadconfig 'de-windowsifies' the paths, so we must do the same.
+    expected = expected.replace('\\', '/')
     assert expected in excinfo.value.message
