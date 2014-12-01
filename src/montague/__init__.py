@@ -8,3 +8,8 @@ from .loadwsgi import Loader
 def load_app(config_path, name=None):
     loader = Loader(config_path)
     return loader.load_app(name)
+
+
+def load_server(config_path, name=None):
+    loader = Loader(config_path)
+    return loader.load_server(name)
