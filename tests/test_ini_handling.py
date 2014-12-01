@@ -35,9 +35,9 @@ def test_load_server(fakeapp):
     actual = server(fakeapp.apps.basic_app)
     assert actual.montague_conf['local_conf']['port'] == '42'
     resp = actual.get('/')
-    assert 'This is basic app' == resp.body
+    assert b'This is basic app' == resp.body
     server = load_server(config_path, name='server_runner')
     actual = server(fakeapp.apps.basic_app2)
     assert actual.montague_conf['local_conf']['host'] == '127.0.0.1'
     resp = actual.get('/')
-    assert 'This is basic app2' == resp.body
+    assert b'This is basic app2' == resp.body
