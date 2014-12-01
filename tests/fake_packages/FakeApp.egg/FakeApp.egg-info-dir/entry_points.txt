@@ -20,3 +20,13 @@
       caps=fakeapp.apps:make_cap_filter
       
 
+[paste.server_factory]
+
+      server_factory=fakeapp.servers:make_server_factory
+
+
+[paste.server_runner]
+
+      server_runner=fakeapp.servers:make_server_runner
+
+

@@ -19,5 +19,11 @@ setup(
       'paste.filter_app_factory': """
       caps2=fakeapp.apps:CapFilter
       """,
+      'paste.server_factory': """
+      server_factory=fakeapp.servers.make_server_factory
+      """,
+      'paste.server_runner': """
+      server_runner=fakeapp.servers.make_server_runner
+      """,
       },
     )
