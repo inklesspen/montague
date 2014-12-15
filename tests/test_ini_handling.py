@@ -1,13 +1,15 @@
 import os
 from montague.ini import IniConfigLoader
+from montague.loadwsgi import Loader
 from montague import load_app, load_server
 
 here = os.path.dirname(__file__)
 
 
 def test_read_config():
-    config = IniConfigLoader(os.path.join(here, 'ini_files/simple_config.ini'))
-    assert config.config() == {
+    ini_path = os.path.join(here, 'config_files/simple_config.ini')
+    config = IniConfigLoader(ini_path)
+    expected = {
         'application:main': {'use': 'package:FakeApp#basic_app'},
         'application:egg': {'use': 'egg:FakeApp#other'},
         'server:server_factory': {
@@ -19,10 +21,12 @@ def test_read_config():
             'use': 'egg:FakeApp#server_runner'
         },
     }
+    assert config.config() == expected
+    assert Loader(ini_path).config == expected
 
 
 def test_load_app(fakeapp):
-    config_path = os.path.join(here, 'ini_files/simple_config.ini')
+    config_path = os.path.join(here, 'config_files/simple_config.ini')
     app = load_app(config_path)
     app2 = load_app(config_path, name='egg')
     assert app is fakeapp.apps.basic_app
@@ -30,7 +34,7 @@ def test_load_app(fakeapp):
 
 
 def test_load_server(fakeapp):
-    config_path = os.path.join(here, 'ini_files/simple_config.ini')
+    config_path = os.path.join(here, 'config_files/simple_config.ini')
     server = load_server(config_path, name='server_factory')
     actual = server(fakeapp.apps.basic_app)
     assert actual.montague_conf['local_conf']['port'] == '42'

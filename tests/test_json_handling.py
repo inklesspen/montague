@@ -6,7 +6,7 @@ here = os.path.dirname(__file__)
 
 
 def test_read_config(fakeapp):
-    loader = Loader(os.path.join(here, 'ini_files/simple_config.json'))
+    loader = Loader(os.path.join(here, 'config_files/simple_config.json'))
     expected = {
         'application:main': {'use': 'package:FakeApp#basic_app'},
         'application:egg': {'use': 'egg:FakeApp#other'},
@@ -24,7 +24,7 @@ def test_read_config(fakeapp):
     
 
 def test_load_app(fakeapp):
-    config_path = os.path.join(here, 'ini_files/simple_config.json')
+    config_path = os.path.join(here, 'config_files/simple_config.json')
     app = load_app(config_path)
     app2 = load_app(config_path, name='egg')
     assert app is fakeapp.apps.basic_app
@@ -32,7 +32,7 @@ def test_load_app(fakeapp):
 
 
 def test_load_server(fakeapp):
-    config_path = os.path.join(here, 'ini_files/simple_config.json')
+    config_path = os.path.join(here, 'config_files/simple_config.json')
     server = load_server(config_path, name='server_factory')
     actual = server(fakeapp.apps.basic_app)
     assert actual.montague_conf['local_conf']['port'] == 42
