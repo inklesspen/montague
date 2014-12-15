@@ -25,5 +25,8 @@ setup(
       'paste.server_runner': """
       server_runner=fakeapp.servers.make_server_runner
       """,
+      'montague.config_loader': """
+      json=fakeapp.config:JSONConfigLoader
+      """,
       },
     )
