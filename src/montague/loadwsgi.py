@@ -5,7 +5,7 @@ import pkg_resources
 from characteristic import attributes
 from .ini import IniConfigLoader
 from .vendor import reify
-from .structs import LoadableConfig
+from .structs import LoadableConfig, DEFAULT
 from .compat.util import lookup_object
 from .exceptions import UnsupportedPasteDeployFeature
 
@@ -16,12 +16,6 @@ scheme_loadable_types = {
     'composite': 'composite',
     'composit': 'composite',
     'server': 'server',
-}
-
-loadable_type_entry_points = {
-    'app': ['paste.app_factory'],
-    'composite': ['paste.composite_factory', 'paste.composit_factory'],
-    'server': ['paste.server_factory', 'paste.server_runner'],
 }
 
 
@@ -49,21 +43,21 @@ class Loader(object):
 
     def app_config(self, name=None):
         try:
+            if name is None:
+                name = DEFAULT
             return self.config_loader.app_config(name)
         except NotImplementedError:
             schemes = ['application', 'app', 'composite', 'composit']
             app_configs = []
-            if name is None:
+            if name is DEFAULT:
                 name = "main"
             for scheme in schemes:
                 key = ':'.join([scheme, name])
-                loadable_type = scheme_loadable_types[scheme]
                 if key in self.config:
-                    groups = loadable_type_entry_points[loadable_type]
-                    app_configs.append(LoadableConfig(
+                    loadable_type = scheme_loadable_types[scheme]
+                    constructor = getattr(LoadableConfig, loadable_type)
+                    app_configs.append(constructor(
                         name=name,
-                        entry_point_groups=groups,
-                        loadable_type=loadable_type,
                         config=self.config[key]))
             if len(app_configs) == 0:
                 for key in self.config:
@@ -71,7 +65,7 @@ class Loader(object):
                     if key_name == name:
                         raise UnsupportedPasteDeployFeature(
                             'The scheme {0} is unsupported.'.format(key_scheme))
-                raise Exception('TODO')
+                raise Exception("TODO: Didn't find the app, not because of schema")
             app_config = app_configs[0]
             return app_config
 
@@ -136,22 +130,22 @@ class Loader(object):
 
     def server_config(self, name=None):
         try:
+            if name is None:
+                name = DEFAULT
             return self.config_loader.server_config(name)
         except NotImplementedError:
             # TODO: abstract this out of here and app_config...
             schemes = ['server']
             server_configs = []
-            if name is None:
+            if name is DEFAULT:
                 name = "main"
             for scheme in schemes:
                 key = ':'.join([scheme, name])
-                loadable_type = scheme_loadable_types[scheme]
                 if key in self.config:
-                    groups = loadable_type_entry_points[loadable_type]
-                    server_configs.append(LoadableConfig(
+                    loadable_type = scheme_loadable_types[scheme]
+                    constructor = getattr(LoadableConfig, loadable_type)
+                    server_configs.append(constructor(
                         name=name,
-                        entry_point_groups=groups,
-                        loadable_type=loadable_type,
                         config=self.config[key]))
             if len(server_configs) == 0:
                 for key in self.config:
@@ -159,7 +153,7 @@ class Loader(object):
                     if key_name == name:
                         raise UnsupportedPasteDeployFeature(
                             'The scheme {0} is unsupported.'.format(key_scheme))
-                raise Exception('TODO')
+                raise Exception("TODO: Didn't find server, not because of schema")
             server_config = server_configs[0]
             return server_config
 

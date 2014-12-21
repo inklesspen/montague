@@ -6,7 +6,7 @@ here = os.path.dirname(__file__)
 
 
 def test_read_config(fakeapp):
-    loader = Loader(os.path.join(here, 'config_files/simple_config.json'))
+    ini_style_loader = Loader(os.path.join(here, 'config_files/simple_config.json_ini'))
     expected = {
         'application:main': {'use': 'package:FakeApp#basic_app'},
         'application:egg': {'use': 'egg:FakeApp#other'},
@@ -20,8 +20,26 @@ def test_read_config(fakeapp):
         },
     }
 
-    assert loader.config == expected
-    
+    assert ini_style_loader.config == expected
+
+    json_style_loader = Loader(os.path.join(here, 'config_files/simple_config.json'))
+    expected = {
+        'application': {
+            'egg': {'use': 'egg:FakeApp#other'},
+            'main': {'use': 'package:FakeApp#basic_app'}
+        },
+        'server': {
+            'server_factory': {'port': 42,
+                               'use': 'egg:FakeApp#server_factory'},
+            'server_runner': {'host': '127.0.0.1',
+                              'use': 'egg:FakeApp#server_runner'}
+        }
+    }
+
+    assert json_style_loader.config == expected
+    assert json_style_loader.config_loader.ini_config() == \
+        ini_style_loader.config_loader.ini_config()
+
 
 def test_load_app(fakeapp):
     config_path = os.path.join(here, 'config_files/simple_config.json')

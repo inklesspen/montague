@@ -1,16 +1,20 @@
 {
-    "application:main": {
-        "use": "package:FakeApp#basic_app"
-    },
-    "application:egg": {
+    "application": {
+        "main": {
+            "use": "package:FakeApp#basic_app"
+        },
+        "egg": {
         "use": "egg:FakeApp#other"
+        }
     },
-    "server:server_factory": {
-        "use": "egg:FakeApp#server_factory",
-        "port": 42
-    },
-    "server:server_runner": {
-        "use": "egg:FakeApp#server_runner",
-        "host": "127.0.0.1"
+    "server": {
+        "server_factory": {
+            "use": "egg:FakeApp#server_factory",
+            "port": 42
+        },
+        "server_runner": {
+            "use": "egg:FakeApp#server_runner",
+            "host": "127.0.0.1"
+        }
     }
 }
