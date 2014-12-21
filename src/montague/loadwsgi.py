@@ -7,7 +7,7 @@ from .ini import IniConfigLoader
 from .vendor import reify
 from .structs import LoadableConfig, DEFAULT
 from .compat.util import lookup_object
-from .exceptions import UnsupportedPasteDeployFeature
+from .exceptions import UnsupportedPasteDeployFeature, ConfigNotFound
 
 
 scheme_loadable_types = {
@@ -41,6 +41,34 @@ class Loader(object):
     def config(self):
         return self.config_loader.config()
 
+    def _fallback_config_loader(self, schemes, kind, name):
+        _configs = []
+        true_name = name
+        if name is DEFAULT:
+            name = "main"
+        for scheme in schemes:
+            key = ':'.join([scheme, name])
+            if key in self.config:
+                loadable_type = scheme_loadable_types[scheme]
+                constructor = getattr(LoadableConfig, loadable_type)
+                _configs.append(constructor(
+                    name=name,
+                    config=self.config[key]))
+        if len(_configs) == 0:
+            for key in self.config:
+                key_scheme, key_name = key.split(':')
+                if key_name == name:
+                    raise UnsupportedPasteDeployFeature(
+                        'The scheme {0} is unsupported.'.format(key_scheme))
+            if true_name is DEFAULT:
+                not_found = "the default {0}".format(kind)
+            else:
+                not_found = "the {0} {1}".format(kind, name)
+            msg = "Unable to find the config for {0}".format(not_found)
+            raise ConfigNotFound(msg)
+        app_config = _configs[0]
+        return app_config
+
     def app_config(self, name=None):
         try:
             if name is None:
@@ -48,25 +76,7 @@ class Loader(object):
             return self.config_loader.app_config(name)
         except NotImplementedError:
             schemes = ['application', 'app', 'composite', 'composit']
-            app_configs = []
-            if name is DEFAULT:
-                name = "main"
-            for scheme in schemes:
-                key = ':'.join([scheme, name])
-                if key in self.config:
-                    loadable_type = scheme_loadable_types[scheme]
-                    constructor = getattr(LoadableConfig, loadable_type)
-                    app_configs.append(constructor(
-                        name=name,
-                        config=self.config[key]))
-            if len(app_configs) == 0:
-                for key in self.config:
-                    key_scheme, key_name = key.split(':')
-                    if key_name == name:
-                        raise UnsupportedPasteDeployFeature(
-                            'The scheme {0} is unsupported.'.format(key_scheme))
-                raise Exception("TODO: Didn't find the app, not because of schema")
-            app_config = app_configs[0]
+            app_config = self._fallback_config_loader(schemes, 'application', name)
             return app_config
 
     def _adapt_entry_point_factory(self, factory, entry_point_group):
@@ -134,27 +144,8 @@ class Loader(object):
                 name = DEFAULT
             return self.config_loader.server_config(name)
         except NotImplementedError:
-            # TODO: abstract this out of here and app_config...
             schemes = ['server']
-            server_configs = []
-            if name is DEFAULT:
-                name = "main"
-            for scheme in schemes:
-                key = ':'.join([scheme, name])
-                if key in self.config:
-                    loadable_type = scheme_loadable_types[scheme]
-                    constructor = getattr(LoadableConfig, loadable_type)
-                    server_configs.append(constructor(
-                        name=name,
-                        config=self.config[key]))
-            if len(server_configs) == 0:
-                for key in self.config:
-                    key_scheme, key_name = key.split(':')
-                    if key_name == name:
-                        raise UnsupportedPasteDeployFeature(
-                            'The scheme {0} is unsupported.'.format(key_scheme))
-                raise Exception("TODO: Didn't find server, not because of schema")
-            server_config = server_configs[0]
+            server_config = self._fallback_config_loader(schemes, 'server', name)
             return server_config
 
     def load_server(self, name=None, global_conf=None):
