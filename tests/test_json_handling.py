@@ -20,7 +20,7 @@ def test_read_config(fakeapp):
         },
     }
 
-    assert ini_style_loader.config == expected
+    assert ini_style_loader.config_loader.config() == expected
 
     json_style_loader = Loader(os.path.join(here, 'config_files/simple_config.json'))
     expected = {
@@ -36,9 +36,8 @@ def test_read_config(fakeapp):
         }
     }
 
-    assert json_style_loader.config == expected
-    assert json_style_loader.config_loader.ini_config() == \
-        ini_style_loader.config_loader.ini_config()
+    assert json_style_loader.config_loader.config() == expected
+    assert json_style_loader.config == ini_style_loader.config
 
 
 def test_load_app(fakeapp):

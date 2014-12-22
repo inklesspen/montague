@@ -39,7 +39,7 @@ class Loader(object):
 
     @reify
     def config(self):
-        return self.config_loader.config()
+        return self.config_loader.ini_config()
 
     def _fallback_config_loader(self, schemes, kind, name):
         _configs = []

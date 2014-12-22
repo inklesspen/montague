@@ -38,11 +38,14 @@ class IniConfigLoader(object):
             self._read_from_file()
         return self._data
 
-    def app_config(self, name="main"):
+    def ini_config(self):
+        return self.config()
+
+    def app_config(self, name):
         raise NotImplementedError
 
-    def server_config(self, name="main"):
+    def server_config(self, name):
         raise NotImplementedError
 
-    def filter_config(self, name="main"):
+    def filter_config(self, name):
         raise NotImplementedError
