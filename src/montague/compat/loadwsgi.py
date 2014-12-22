@@ -276,10 +276,62 @@ def loadapp(uri, name=None, **kw):
 
 
 def loadfilter(uri, name=None, **kw):
+    from ..loadwsgi import Loader
+    from ..exceptions import UnsupportedPasteDeployFeature
+    fallback = False
+    if uri.startswith('config:'):
+        path = uri[7:]
+        if 'relative_to' in kw:
+            path = os.path.join(kw['relative_to'], path)
+        if "#" in path:
+            path, path_name = path.rsplit("#", 1)
+            if name is None:
+                name = path_name
+        loader = Loader(path)
+
+        try:
+            filter_config = loader.filter_config(name)
+        except UnsupportedPasteDeployFeature:
+            fallback = True
+        else:
+            for key in filter_config.config.keys():
+                if key.startswith('get ') or key.startswith('set '):
+                    # stupid interaction with defaults, fall back
+                    fallback = True
+        if not fallback:
+            global_conf = loader.config_loader.defaults
+            return loader.load_filter(name, global_conf)
+
     return loadobj(FILTER, uri, name=name, **kw)
 
 
 def loadserver(uri, name=None, **kw):
+    from ..loadwsgi import Loader
+    from ..exceptions import UnsupportedPasteDeployFeature
+    fallback = False
+    if uri.startswith('config:'):
+        path = uri[7:]
+        if 'relative_to' in kw:
+            path = os.path.join(kw['relative_to'], path)
+        if "#" in path:
+            path, path_name = path.rsplit("#", 1)
+            if name is None:
+                name = path_name
+        loader = Loader(path)
+
+        try:
+            server_config = loader.server_config(name)
+        except UnsupportedPasteDeployFeature:
+            fallback = True
+        else:
+            for key in server_config.config.keys():
+                if key.startswith('get ') or key.startswith('set '):
+                    # stupid interaction with defaults, fall back
+                    fallback = True
+        if not fallback:
+            global_conf = loader.config_loader.defaults
+            return loader.load_server(name, global_conf)
+
     return loadobj(SERVER, uri, name=name, **kw)
 
 
