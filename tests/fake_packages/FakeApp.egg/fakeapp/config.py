@@ -56,9 +56,11 @@ class JSONConfigLoader(object):
     def ini_config(self):
         retval = {}
         for name, config in six.iteritems(self._config['application']):
-            retval['application:{0}'.format(name)] = config
+            retval[six.u('application:{0}'.format(name))] = config
         for name, config in six.iteritems(self._config['server']):
-            retval['server:{0}'.format(name)] = config
+            retval[six.u('server:{0}'.format(name))] = config
+        for name, config in six.iteritems(self._config['filter']):
+            retval[six.u('filter:{0}'.format(name))] = config
         return retval
 
     def app_config(self, name):

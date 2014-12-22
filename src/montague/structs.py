@@ -14,6 +14,7 @@ loadable_type_entry_points = {
     'app': ['paste.app_factory'],
     'composite': ['paste.composite_factory', 'paste.composit_factory'],
     'server': ['paste.server_factory', 'paste.server_runner'],
+    'filter': ['paste.filter_factory', 'paste.filter_app_factory'],
 }
 
 
@@ -37,3 +38,9 @@ class LoadableConfig(object):
         return cls(name=name, config=config,
                    loadable_type='server',
                    entry_point_groups=loadable_type_entry_points['server'])
+
+    @classmethod
+    def filter(cls, name, config):
+        return cls(name=name, config=config,
+                   loadable_type='filter',
+                   entry_point_groups=loadable_type_entry_points['filter'])

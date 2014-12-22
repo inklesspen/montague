@@ -4,7 +4,11 @@
             "use": "package:FakeApp#basic_app"
         },
         "egg": {
-        "use": "egg:FakeApp#other"
+            "use": "egg:FakeApp#other"
+        },
+        "filtered-app": {
+            "use": "package:FakeApp#basic_app",
+            "filter-with": "filter"
         }
     },
     "server": {
@@ -15,6 +19,12 @@
         "server_runner": {
             "use": "egg:FakeApp#server_runner",
             "host": "127.0.0.1"
+        }
+    },
+    "filter": {
+        "filter": {
+            "use": "egg:FakeApp#caps",
+            "method_to_call": "lower"
         }
     }
 }

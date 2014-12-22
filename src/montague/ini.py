@@ -5,6 +5,8 @@ from six.moves.configparser import InterpolationMissingOptionError
 from .interfaces import IConfigLoader, IConfigLoaderFactory
 from zope.interface import directlyProvides, implementer
 from characteristic import attributes
+import copy
+import six
 
 
 @attributes(['path'], apply_with_init=False, apply_immutable=True)
@@ -39,7 +41,23 @@ class IniConfigLoader(object):
         return self._data
 
     def ini_config(self):
-        return self.config()
+        if self._data is None:
+            self._read_from_file()
+        auto_gen_count = 0
+        additional = {}
+        workdata = copy.deepcopy(self._data)
+        for value in six.itervalues(workdata):
+            if 'filter-with' in value:
+                # Need to make this into a section if it isn't already
+                if ':' in value['filter-with']:
+                    auto_gen_count += 1
+                    auto_gen_name = 'filter-{0}'.format(auto_gen_count)
+                    additional['filter:{0}'.format(auto_gen_name)] = {
+                        'use': value['filter-with']
+                    }
+                    value['filter-with'] = auto_gen_name
+        workdata.update(additional)
+        return workdata
 
     def app_config(self, name):
         raise NotImplementedError

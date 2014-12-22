@@ -1,7 +1,7 @@
 import os
 from montague.ini import IniConfigLoader
 from montague.loadwsgi import Loader
-from montague import load_app, load_server
+from montague import load_app, load_server, load_filter
 
 here = os.path.dirname(__file__)
 
@@ -19,6 +19,14 @@ def test_read_config():
         'server:server_runner': {
             'host': '127.0.0.1',
             'use': 'egg:FakeApp#server_runner'
+        },
+        'filter:filter': {
+            'method_to_call': 'lower',
+            'use': 'egg:FakeApp#caps'
+        },
+        'app:filtered-app': {
+            'filter-with': 'filter',
+            'use': 'package:FakeApp#basic_app'
         },
     }
     assert config.config() == expected
@@ -45,3 +53,18 @@ def test_load_server(fakeapp):
     assert actual.montague_conf['local_conf']['host'] == '127.0.0.1'
     resp = actual.get('/')
     assert b'This is basic app2' == resp.body
+
+
+def test_load_filter(fakeapp):
+    config_path = os.path.join(here, 'config_files/simple_config.ini')
+    filter = load_filter(config_path, name='filter')
+    app = filter(None)
+    assert isinstance(app, fakeapp.apps.CapFilter)
+
+
+def test_load_filtered_app(fakeapp):
+    config_path = os.path.join(here, 'config_files/simple_config.ini')
+    app = load_app(config_path, name='filtered-app')
+    assert isinstance(app, fakeapp.apps.CapFilter)
+    assert app.app is fakeapp.apps.basic_app
+    assert app.method_to_call == 'lower'

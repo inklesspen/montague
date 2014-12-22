@@ -16,6 +16,7 @@ scheme_loadable_types = {
     'composite': 'composite',
     'composit': 'composite',
     'server': 'server',
+    'filter': 'filter',
 }
 
 
@@ -132,9 +133,15 @@ class Loader(object):
             raise Exception('TODO: scheme type {}'.format(scheme))
         local_conf = dict(app_config.config)
         del local_conf['use']
+        filter_with = local_conf.pop('filter-with', None)
+        app_global_conf = global_conf
         if global_conf is None:
-            global_conf = {}
-        return factory(global_conf, **local_conf)
+            app_global_conf = {}
+        app = factory(app_global_conf, **local_conf)
+        if filter_with is not None:
+            filter = self.load_filter(name=filter_with, global_conf=None)
+            app = filter(app)
+        return app
 
     get_app = load_app
 
@@ -163,6 +170,45 @@ class Loader(object):
         if global_conf is None:
             global_conf = {}
         return factory(global_conf, **local_conf)
+
+    def filter_config(self, name=None):
+        try:
+            if name is None:
+                name = DEFAULT
+            return self.config_loader.filter_config(name)
+        except NotImplementedError:
+            schemes = ['filter', 'filter-app']
+            filter_config = self._fallback_config_loader(schemes, 'filter', name)
+            return filter_config
+
+    def load_filter(self, name=None, global_conf=None):
+        filter_config = self.filter_config(name)
+        scheme, resource = filter_config.config['use'].split(':', 1)
+        if scheme in ('egg', 'package'):
+            factory = self._load_entry_point_factory(
+                resource, filter_config.entry_point_groups)
+        elif scheme == 'call':
+            factory = self._load_call_factory(resource, filter_config.loadable_type)
+        else:
+            raise Exception('TODO: scheme type {}'.format(scheme))
+        local_conf = dict(filter_config.config)
+        del local_conf['use']
+        filter_with = local_conf.pop('filter-with', None)
+        if global_conf is None:
+            global_conf = {}
+        filter = factory(global_conf, **local_conf)
+        if filter_with is not None:
+            inner_filter = filter
+            outer_filter = self.load_filter(name=filter_with, global_conf=None)
+
+            # The outer_filter must be applied _after_ the inner_filter gets applied.
+            # TODO: consider preserving signature
+            def apply_filter(app):
+                app = inner_filter(app)
+                app = outer_filter(app)
+                return app
+            return apply_filter
+        return filter
 
 
 def _get_suffix(path):

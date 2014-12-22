@@ -10,6 +10,11 @@ def test_read_config(fakeapp):
     expected = {
         'application:main': {'use': 'package:FakeApp#basic_app'},
         'application:egg': {'use': 'egg:FakeApp#other'},
+        'application:filtered-app': {
+            'filter-with': 'filter',
+            'use': 'package:FakeApp#basic_app'
+        },
+        'filter:filter': {'method_to_call': 'lower', 'use': 'egg:FakeApp#caps'},
         'server:server_factory': {
             'port': 42,
             'use': 'egg:FakeApp#server_factory',
@@ -26,7 +31,12 @@ def test_read_config(fakeapp):
     expected = {
         'application': {
             'egg': {'use': 'egg:FakeApp#other'},
-            'main': {'use': 'package:FakeApp#basic_app'}
+            'main': {'use': 'package:FakeApp#basic_app'},
+            'filtered-app': {'filter-with': 'filter',
+                             'use': 'package:FakeApp#basic_app'},
+        },
+        'filter': {
+            'filter': {'method_to_call': 'lower', 'use': 'egg:FakeApp#caps'}
         },
         'server': {
             'server_factory': {'port': 42,
@@ -60,3 +70,11 @@ def test_load_server(fakeapp):
     assert actual.montague_conf['local_conf']['host'] == '127.0.0.1'
     resp = actual.get('/')
     assert b'This is basic app2' == resp.body
+
+
+def test_load_filtered_app(fakeapp):
+    config_path = os.path.join(here, 'config_files/simple_config.json')
+    app = load_app(config_path, name='filtered-app')
+    assert isinstance(app, fakeapp.apps.CapFilter)
+    assert app.app is fakeapp.apps.basic_app
+    assert app.method_to_call == 'lower'
