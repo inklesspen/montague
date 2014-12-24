@@ -5,7 +5,7 @@ import pkg_resources
 from characteristic import attributes
 from .ini import IniConfigLoader
 from .vendor import reify
-from .structs import LoadableConfig, DEFAULT
+from .structs import LoadableConfig, DEFAULT, Loadable
 from .compat.util import lookup_object
 from .exceptions import UnsupportedPasteDeployFeature, ConfigNotFound
 
@@ -121,7 +121,7 @@ class Loader(object):
     def _load_call_factory(self, resource, factory_type):
         return self._adapt_call_factory(lookup_object(resource), factory_type)
 
-    def load_app(self, name=None, global_conf=None):
+    def _load_app(self, name=None, global_conf=None):
         app_config = self.app_config(name)
         scheme, resource = app_config.config['use'].split(':', 1)
         if scheme in ('egg', 'package'):
@@ -138,11 +138,15 @@ class Loader(object):
         if global_conf is None:
             app_global_conf = {}
         app = factory(app_global_conf, **local_conf)
+        loadable = Loadable(loaded=app, is_app=True)
         if filter_with is not None:
-            filter = self.load_filter(name=filter_with, global_conf=None)
-            app = filter(app)
-        return app
+            loadable.outer = self._load_filter(name=filter_with, global_conf=None)
+        return loadable
 
+    def load_app(self, name=None, global_conf=None):
+        return self._load_app(name, global_conf).normalize().get()
+
+    # Supports composite app pattern.
     get_app = load_app
 
     def server_config(self, name=None):
@@ -181,7 +185,7 @@ class Loader(object):
             filter_config = self._fallback_config_loader(schemes, 'filter', name)
             return filter_config
 
-    def load_filter(self, name=None, global_conf=None):
+    def _load_filter(self, name=None, global_conf=None):
         filter_config = self.filter_config(name)
         scheme, resource = filter_config.config['use'].split(':', 1)
         if scheme in ('egg', 'package'):
@@ -197,18 +201,13 @@ class Loader(object):
         if global_conf is None:
             global_conf = {}
         filter = factory(global_conf, **local_conf)
+        loadable = Loadable(loaded=filter)
         if filter_with is not None:
-            inner_filter = filter
-            outer_filter = self.load_filter(name=filter_with, global_conf=None)
+            loadable.outer = self._load_filter(name=filter_with, global_conf=None)
+        return loadable
 
-            # The outer_filter must be applied _after_ the inner_filter gets applied.
-            # TODO: consider preserving signature
-            def apply_filter(app):
-                app = inner_filter(app)
-                app = outer_filter(app)
-                return app
-            return apply_filter
-        return filter
+    def load_filter(self, name=None, global_conf=None):
+        return self._load_filter(name, global_conf).normalize().get()
 
 
 def _get_suffix(path):

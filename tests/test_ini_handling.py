@@ -2,6 +2,7 @@ import os
 from montague.ini import IniConfigLoader
 from montague.loadwsgi import Loader
 from montague import load_app, load_server, load_filter
+from montague.structs import ComposedFilter
 
 here = os.path.dirname(__file__)
 
@@ -22,6 +23,13 @@ def test_read_config():
         },
         'filter:filter': {
             'method_to_call': 'lower',
+            'use': 'egg:FakeApp#caps'
+        },
+        'filter:filter1': {
+            'filter-with': 'filter2',
+            'use': 'egg:FakeApp#caps'
+        },
+        'filter:filter2': {
             'use': 'egg:FakeApp#caps'
         },
         'app:filtered-app': {
@@ -68,3 +76,13 @@ def test_load_filtered_app(fakeapp):
     assert isinstance(app, fakeapp.apps.CapFilter)
     assert app.app is fakeapp.apps.basic_app
     assert app.method_to_call == 'lower'
+
+
+def test_load_layered_filter(fakeapp):
+    config_path = os.path.join(here, 'config_files/simple_config.ini')
+    filter = load_filter(config_path, name='filter1')
+    assert isinstance(filter, ComposedFilter)
+    app = filter(fakeapp.apps.basic_app)
+    assert app.app.app is fakeapp.apps.basic_app
+    assert isinstance(app, fakeapp.apps.CapFilter)
+    assert isinstance(app.app, fakeapp.apps.CapFilter)
