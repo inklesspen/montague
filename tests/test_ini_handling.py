@@ -86,3 +86,12 @@ def test_load_layered_filter(fakeapp):
     assert app.app.app is fakeapp.apps.basic_app
     assert isinstance(app, fakeapp.apps.CapFilter)
     assert isinstance(app.app, fakeapp.apps.CapFilter)
+
+
+def test_filter_app(fakeapp):
+    # Specifically the 'filter-app' config type
+    config_path = os.path.join(here, 'config_files/filter_app.ini')
+    app = load_app(config_path)
+    assert app.method_to_call == 'lower'
+    assert app.app.method_to_call == 'upper'
+    assert app.app.app is fakeapp.apps.basic_app

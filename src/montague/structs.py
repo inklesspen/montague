@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
-import weakref
+from itertools import tee
+from six.moves import zip as izip
 from characteristic import attributes, Attribute
 
 
@@ -71,14 +72,29 @@ class Loadable(object):
        attribute, while a filter-app with a next property will become a Loadable
        with another Loadable as an 'inner' property."""
     def normalize(self):
-        if self.outer is None:
-            return self
-        if isinstance(self.outer, weakref.ref):
-            return self.outer()
-        self.outer.inner = self
-        outer = self.outer
-        self.outer = weakref.ref(outer)
-        return outer.normalize()
+        # The desired end state is a chain of loadables, starting with
+        # the outermost filter, each with an inner property; the final
+        # loadable contains the app (or last filter) and has no inner.
+
+        # We call this method on what we can treat as the root loadable
+        # of a binary tree, perform an in-order traversal to get the chain,
+        # and then reconstruct the chain as (effectively) a linked list.
+
+        chain = []
+        self._make_chain(chain)
+        for node in chain:
+            node.inner = None
+            node.outer = None
+        for parent, child in pairwise(chain):
+            parent.inner = child
+        return chain[0]
+
+    def _make_chain(self, chain):
+        if self.outer is not None:
+            self.outer._make_chain(chain)
+        chain.append(self)
+        if self.inner is not None:
+            self.inner._make_chain(chain)
 
     def get(self):
         if self.inner is None:
@@ -96,3 +112,11 @@ class Loadable(object):
             return val
         else:
             return self.loaded(val)
+
+
+def pairwise(iterable):
+    # recipe from itertools
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    a, b = tee(iterable)
+    next(b, None)
+    return izip(a, b)

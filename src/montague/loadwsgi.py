@@ -17,6 +17,7 @@ scheme_loadable_types = {
     'composit': 'composite',
     'server': 'server',
     'filter': 'filter',
+    'filter-app': 'filter',
 }
 
 
@@ -76,7 +77,7 @@ class Loader(object):
                 name = DEFAULT
             return self.config_loader.app_config(name)
         except NotImplementedError:
-            schemes = ['application', 'app', 'composite', 'composit']
+            schemes = ['application', 'app', 'composite', 'composit', 'filter-app']
             app_config = self._fallback_config_loader(schemes, 'application', name)
             return app_config
 
@@ -86,7 +87,7 @@ class Loader(object):
             def adapter(global_conf, **local_conf):
                 return factory(self, global_conf, **local_conf)
             return adapter
-        if entry_point_group == 'paste.server_runner':
+        if entry_point_group in ['paste.server_runner', 'paste.filter_app_factory']:
             def outer(global_conf, **local_conf):
                 def inner(wsgi_app):
                     return factory(wsgi_app, global_conf, **local_conf)
@@ -121,8 +122,7 @@ class Loader(object):
     def _load_call_factory(self, resource, factory_type):
         return self._adapt_call_factory(lookup_object(resource), factory_type)
 
-    def _load_app(self, name=None, global_conf=None):
-        app_config = self.app_config(name)
+    def _load_app_from_config(self, app_config, global_conf):
         scheme, resource = app_config.config['use'].split(':', 1)
         if scheme in ('egg', 'package'):
             factory = self._load_entry_point_factory(
@@ -143,8 +143,18 @@ class Loader(object):
             loadable.outer = self._load_filter(name=filter_with, global_conf=None)
         return loadable
 
+    def _load_app(self, name, global_conf):
+        app_config = self.app_config(name)
+        is_app = (app_config.loadable_type in ['app', 'composite'])
+        if is_app:
+            return self._load_app_from_config(app_config, global_conf)
+        else:
+            # filter-app is loaded as an app, but actually is a filter.
+            return self._load_filter_from_config(app_config, global_conf)
+
     def load_app(self, name=None, global_conf=None):
-        return self._load_app(name, global_conf).normalize().get()
+        loadable = self._load_app(name, global_conf)
+        return loadable.normalize().get()
 
     # Supports composite app pattern.
     get_app = load_app
@@ -181,12 +191,11 @@ class Loader(object):
                 name = DEFAULT
             return self.config_loader.filter_config(name)
         except NotImplementedError:
-            schemes = ['filter', 'filter-app']
+            schemes = ['filter']
             filter_config = self._fallback_config_loader(schemes, 'filter', name)
             return filter_config
 
-    def _load_filter(self, name=None, global_conf=None):
-        filter_config = self.filter_config(name)
+    def _load_filter_from_config(self, filter_config, global_conf):
         scheme, resource = filter_config.config['use'].split(':', 1)
         if scheme in ('egg', 'package'):
             factory = self._load_entry_point_factory(
@@ -198,13 +207,20 @@ class Loader(object):
         local_conf = dict(filter_config.config)
         del local_conf['use']
         filter_with = local_conf.pop('filter-with', None)
+        next = local_conf.pop('next', None)
         if global_conf is None:
             global_conf = {}
         filter = factory(global_conf, **local_conf)
         loadable = Loadable(loaded=filter)
         if filter_with is not None:
             loadable.outer = self._load_filter(name=filter_with, global_conf=None)
+        if next is not None:
+            loadable.inner = self._load_app(name=next, global_conf=None)
         return loadable
+
+    def _load_filter(self, name, global_conf):
+        filter_config = self.filter_config(name)
+        return self._load_filter_from_config(filter_config, global_conf)
 
     def load_filter(self, name=None, global_conf=None):
         return self._load_filter(name, global_conf).normalize().get()
