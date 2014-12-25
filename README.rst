@@ -30,7 +30,7 @@ Montague
     :target: https://readthedocs.org/projects/montague
     :alt: Documentation Status
 
-Montague provides functions to load WSGI apps and servers based on configuration files. It's based on PasteDeploy's INI file support.
+Montague provides functions to load WSGI apps and servers based on configuration files. It's based on PasteDeploy_'s INI file support.
           
 * Free software: MIT license
 
@@ -52,3 +52,6 @@ Development
 To run the all tests run::
 
     tox
+
+
+.. _PasteDeploy: http://pythonpaste.org/deploy/
