@@ -247,7 +247,6 @@ FILTER_WITH = _FilterWith()
 
 def loadapp(uri, name=None, **kw):
     from ..loadwsgi import Loader
-    from ..exceptions import UnsupportedPasteDeployFeature
     fallback = False
     if uri.startswith('config:'):
         path = uri[7:]
@@ -259,15 +258,11 @@ def loadapp(uri, name=None, **kw):
                 name = path_name
         loader = Loader(path)
 
-        try:
-            app_config = loader.app_config(name)
-        except UnsupportedPasteDeployFeature:
-            fallback = True
-        else:
-            for key in app_config.config.keys():
-                if key.startswith('get ') or key.startswith('set '):
-                    # stupid interaction with defaults, fall back
-                    fallback = True
+        app_config = loader.app_config(name)
+        for key in app_config.config.keys():
+            if key.startswith('get ') or key.startswith('set '):
+                # stupid interaction with defaults, fall back
+                fallback = True
         if not fallback:
             global_conf = loader.config_loader.defaults
             return loader.load_app(name, global_conf)
@@ -277,7 +272,6 @@ def loadapp(uri, name=None, **kw):
 
 def loadfilter(uri, name=None, **kw):
     from ..loadwsgi import Loader
-    from ..exceptions import UnsupportedPasteDeployFeature
     fallback = False
     if uri.startswith('config:'):
         path = uri[7:]
@@ -289,15 +283,11 @@ def loadfilter(uri, name=None, **kw):
                 name = path_name
         loader = Loader(path)
 
-        try:
-            filter_config = loader.filter_config(name)
-        except UnsupportedPasteDeployFeature:
-            fallback = True
-        else:
-            for key in filter_config.config.keys():
-                if key.startswith('get ') or key.startswith('set '):
-                    # stupid interaction with defaults, fall back
-                    fallback = True
+        filter_config = loader.filter_config(name)
+        for key in filter_config.config.keys():
+            if key.startswith('get ') or key.startswith('set '):
+                # stupid interaction with defaults, fall back
+                fallback = True
         if not fallback:
             global_conf = loader.config_loader.defaults
             return loader.load_filter(name, global_conf)
@@ -307,7 +297,6 @@ def loadfilter(uri, name=None, **kw):
 
 def loadserver(uri, name=None, **kw):
     from ..loadwsgi import Loader
-    from ..exceptions import UnsupportedPasteDeployFeature
     fallback = False
     if uri.startswith('config:'):
         path = uri[7:]
@@ -319,15 +308,11 @@ def loadserver(uri, name=None, **kw):
                 name = path_name
         loader = Loader(path)
 
-        try:
-            server_config = loader.server_config(name)
-        except UnsupportedPasteDeployFeature:
-            fallback = True
-        else:
-            for key in server_config.config.keys():
-                if key.startswith('get ') or key.startswith('set '):
-                    # stupid interaction with defaults, fall back
-                    fallback = True
+        server_config = loader.server_config(name)
+        for key in server_config.config.keys():
+            if key.startswith('get ') or key.startswith('set '):
+                # stupid interaction with defaults, fall back
+                fallback = True
         if not fallback:
             global_conf = loader.config_loader.defaults
             return loader.load_server(name, global_conf)

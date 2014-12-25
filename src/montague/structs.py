@@ -47,6 +47,12 @@ class LoadableConfig(object):
                    loadable_type='filter',
                    entry_point_groups=loadable_type_entry_points['filter'])
 
+    @classmethod
+    def pipeline(cls, name, config):
+        return cls(name=name, config=config,
+                   loadable_type='pipeline',
+                   entry_point_groups=[])
+
 
 @attributes(['filters'], apply_with_init=False)
 class ComposedFilter(object):

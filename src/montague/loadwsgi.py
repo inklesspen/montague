@@ -7,7 +7,7 @@ from .ini import IniConfigLoader
 from .vendor import reify
 from .structs import LoadableConfig, DEFAULT, Loadable
 from .compat.util import lookup_object
-from .exceptions import UnsupportedPasteDeployFeature, ConfigNotFound
+from .exceptions import ConfigNotFound
 
 
 scheme_loadable_types = {
@@ -18,6 +18,7 @@ scheme_loadable_types = {
     'server': 'server',
     'filter': 'filter',
     'filter-app': 'filter',
+    'pipeline': 'pipeline',
 }
 
 
@@ -57,11 +58,6 @@ class Loader(object):
                     name=name,
                     config=self.config[key]))
         if len(_configs) == 0:
-            for key in self.config:
-                key_scheme, key_name = key.split(':')
-                if key_name == name:
-                    raise UnsupportedPasteDeployFeature(
-                        'The scheme {0} is unsupported.'.format(key_scheme))
             if true_name is DEFAULT:
                 not_found = "the default {0}".format(kind)
             else:
@@ -77,7 +73,11 @@ class Loader(object):
                 name = DEFAULT
             return self.config_loader.app_config(name)
         except NotImplementedError:
-            schemes = ['application', 'app', 'composite', 'composit', 'filter-app']
+            schemes = [
+                'application', 'app',
+                'composite', 'composit',
+                'filter-app', 'pipeline'
+            ]
             app_config = self._fallback_config_loader(schemes, 'application', name)
             return app_config
 
@@ -149,8 +149,12 @@ class Loader(object):
         if is_app:
             return self._load_app_from_config(app_config, global_conf)
         else:
-            # filter-app is loaded as an app, but actually is a filter.
-            return self._load_filter_from_config(app_config, global_conf)
+            if app_config.loadable_type == 'pipeline':
+                # pipline is its own special specialness
+                return self._load_pipeline_from_config(app_config, global_conf)
+            else:
+                # filter-app is loaded as an app, but actually is a filter.
+                return self._load_filter_from_config(app_config, global_conf)
 
     def load_app(self, name=None, global_conf=None):
         loadable = self._load_app(name, global_conf)
@@ -194,6 +198,43 @@ class Loader(object):
             schemes = ['filter']
             filter_config = self._fallback_config_loader(schemes, 'filter', name)
             return filter_config
+
+    def _load_pipeline_from_config(self, pipeline_config, global_conf):
+        items = pipeline_config.config['pipeline'].split()
+        pipeline = []
+        filters = items[:-1]
+        app = items[-1]
+        generated_name_counter = 0
+
+        for filter_spec in filters:
+            if ':' in filter_spec:
+                # scheme, resource pair
+                generated_name_counter += 1
+                name = 'pipeline-filter-{0}'.format(generated_name_counter)
+                filter_config = LoadableConfig.filter(
+                    name=name, config={'use': filter_spec})
+                pipeline.append(self._load_filter_from_config(
+                    filter_config, global_conf))
+            else:
+                pipeline.append(self._load_filter(filter_spec, global_conf))
+        if ':' in app:
+            name = 'pipeline-app'
+            app_config = LoadableConfig.app(name=name, config={'use': app})
+            pipeline.append(self._load_app_from_config(app_config, global_conf))
+        else:
+            pipeline.append(self._load_app(app, global_conf))
+
+        pipeline = [p.normalize() for p in pipeline]
+
+        root = pipeline.pop(0)
+        current = root
+        for item in pipeline:
+            while current.inner is not None:
+                current = current.inner
+            current.inner = item
+            current = item
+
+        return root
 
     def _load_filter_from_config(self, filter_config, global_conf):
         scheme, resource = filter_config.config['use'].split(':', 1)
