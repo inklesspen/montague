@@ -9,7 +9,7 @@ from characteristic import attributes, Attribute
 class Sigil(object):
     pass
 
-DEFAULT = Sigil(kind='loadable_config')
+DEFAULT = Sigil(kind='loadable_config default')
 
 
 loadable_type_entry_points = {
@@ -20,38 +20,32 @@ loadable_type_entry_points = {
 }
 
 
-@attributes(['name', 'entry_point_groups',
-             'loadable_type', 'config'], apply_immutable=True)
+@attributes(['name', 'entry_point_groups', 'loadable_type',
+             'config', 'global_config'], apply_immutable=True)
 class LoadableConfig(object):
     @classmethod
     def app(cls, name, config):
-        return cls(name=name, config=config,
+        return cls(name=name, config=config, global_config={},
                    loadable_type='app',
                    entry_point_groups=loadable_type_entry_points['app'])
 
     @classmethod
     def composite(cls, name, config):
-        return cls(name=name, config=config,
+        return cls(name=name, config=config, global_config={},
                    loadable_type='composite',
                    entry_point_groups=loadable_type_entry_points['composite'])
 
     @classmethod
     def server(cls, name, config):
-        return cls(name=name, config=config,
+        return cls(name=name, config=config, global_config={},
                    loadable_type='server',
                    entry_point_groups=loadable_type_entry_points['server'])
 
     @classmethod
     def filter(cls, name, config):
-        return cls(name=name, config=config,
+        return cls(name=name, config=config, global_config={},
                    loadable_type='filter',
                    entry_point_groups=loadable_type_entry_points['filter'])
-
-    @classmethod
-    def pipeline(cls, name, config):
-        return cls(name=name, config=config,
-                   loadable_type='pipeline',
-                   entry_point_groups=[])
 
 
 @attributes(['filters'], apply_with_init=False)
@@ -68,7 +62,7 @@ class ComposedFilter(object):
         return app
 
 
-@attributes(['loaded',
+@attributes(['factory', 'local_conf', 'global_conf',
              Attribute('inner', default_value=None),
              Attribute('outer', default_value=None),
              Attribute('is_app', default_value=False)])
@@ -103,21 +97,22 @@ class Loadable(object):
             self.inner._make_chain(chain)
 
     def get(self):
+        loaded = self.factory(self.global_conf, **self.local_conf)
         if self.inner is None:
             if self.is_app:
-                return self.loaded
+                return loaded
             else:
                 # Need to compose these filters
                 composed = ComposedFilter()
-                composed.add_filter(self.loaded)
+                composed.add_filter(loaded)
                 return composed
         val = self.inner.get()
         if isinstance(val, ComposedFilter):
             # still composing
-            val.add_filter(self.loaded)
+            val.add_filter(loaded)
             return val
         else:
-            return self.loaded(val)
+            return loaded(val)
 
 
 def pairwise(iterable):

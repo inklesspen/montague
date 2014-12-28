@@ -27,7 +27,6 @@ setup(
       """,
       'montague.config_loader': """
       json=fakeapp.config:JSONConfigLoader
-      json_ini=fakeapp.config:JSONINIConfigLoader
       """,
       },
     )
