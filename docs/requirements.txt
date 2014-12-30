@@ -1,4 +1,5 @@
 sphinx
 sphinxcontrib-napoleon
 sphinx-py3doc-enhanced-theme
+repoze.sphinx.autointerface
 -e .

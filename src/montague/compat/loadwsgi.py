@@ -247,6 +247,7 @@ FILTER_WITH = _FilterWith()
 
 def loadapp(uri, name=None, **kw):
     from ..loadwsgi import Loader
+    from ..structs import DEFAULT
     fallback = False
     if uri.startswith('config:'):
         path = uri[7:]
@@ -256,6 +257,8 @@ def loadapp(uri, name=None, **kw):
             path, path_name = path.rsplit("#", 1)
             if name is None:
                 name = path_name
+        if name == 'main':
+            name = DEFAULT
         loader = Loader(path)
 
         app_config = loader.app_config(name)
@@ -272,6 +275,7 @@ def loadapp(uri, name=None, **kw):
 
 def loadfilter(uri, name=None, **kw):
     from ..loadwsgi import Loader
+    from ..structs import DEFAULT
     fallback = False
     if uri.startswith('config:'):
         path = uri[7:]
@@ -281,6 +285,8 @@ def loadfilter(uri, name=None, **kw):
             path, path_name = path.rsplit("#", 1)
             if name is None:
                 name = path_name
+        if name == 'main':
+            name = DEFAULT
         loader = Loader(path)
 
         filter_config = loader.filter_config(name)
@@ -297,6 +303,7 @@ def loadfilter(uri, name=None, **kw):
 
 def loadserver(uri, name=None, **kw):
     from ..loadwsgi import Loader
+    from ..structs import DEFAULT
     fallback = False
     if uri.startswith('config:'):
         path = uri[7:]
@@ -306,6 +313,8 @@ def loadserver(uri, name=None, **kw):
             path, path_name = path.rsplit("#", 1)
             if name is None:
                 name = path_name
+        if name == 'main':
+            name = DEFAULT
         loader = Loader(path)
 
         server_config = loader.server_config(name)

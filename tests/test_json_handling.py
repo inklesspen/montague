@@ -1,53 +1,41 @@
 import os
 from montague.loadwsgi import Loader
 from montague import load_app, load_server
+from montague.structs import DEFAULT
 
 here = os.path.dirname(__file__)
 
 
 def test_read_config(fakeapp):
-    ini_style_loader = Loader(os.path.join(here, 'config_files/simple_config.json_ini'))
-    expected = {
-        'application:main': {'use': 'package:FakeApp#basic_app'},
-        'application:egg': {'use': 'egg:FakeApp#other'},
-        'application:filtered-app': {
-            'filter-with': 'filter',
-            'use': 'package:FakeApp#basic_app'
-        },
-        'filter:filter': {'method_to_call': 'lower', 'use': 'egg:FakeApp#caps'},
-        'server:server_factory': {
-            'port': 42,
-            'use': 'egg:FakeApp#server_factory',
-        },
-        'server:server_runner': {
-            'host': '127.0.0.1',
-            'use': 'egg:FakeApp#server_runner'
-        },
-    }
-
-    assert ini_style_loader.config_loader.config() == expected
-
-    json_style_loader = Loader(os.path.join(here, 'config_files/simple_config.json'))
     expected = {
         'application': {
+            DEFAULT: {'use': 'package:FakeApp#basic_app'},
             'egg': {'use': 'egg:FakeApp#other'},
-            'main': {'use': 'package:FakeApp#basic_app'},
-            'filtered-app': {'filter-with': 'filter',
-                             'use': 'package:FakeApp#basic_app'},
+            'filtered-app': {
+                'filter-with': 'filter',
+                'use': 'package:FakeApp#basic_app',
+            },
         },
         'filter': {
-            'filter': {'method_to_call': 'lower', 'use': 'egg:FakeApp#caps'}
+            'filter': {
+                'use': 'egg:FakeApp#caps',
+                'method_to_call': 'lower',
+            },
         },
         'server': {
-            'server_factory': {'port': 42,
-                               'use': 'egg:FakeApp#server_factory'},
-            'server_runner': {'host': '127.0.0.1',
-                              'use': 'egg:FakeApp#server_runner'}
-        }
+            'server_factory': {
+                'use': 'egg:FakeApp#server_factory',
+                'port': 42,
+            },
+            'server_runner': {
+                'use': 'egg:FakeApp#server_runner',
+                'host': '127.0.0.1',
+            },
+        },
     }
+    json_style_loader = Loader(os.path.join(here, 'config_files/simple_config.json'))
 
     assert json_style_loader.config_loader.config() == expected
-    assert json_style_loader.config == ini_style_loader.config
 
 
 def test_load_app(fakeapp):

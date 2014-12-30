@@ -2,7 +2,7 @@ import os
 from montague.ini import IniConfigLoader
 from montague.loadwsgi import Loader
 from montague import load_app, load_server, load_filter
-from montague.structs import ComposedFilter
+from montague.structs import ComposedFilter, DEFAULT
 
 here = os.path.dirname(__file__)
 
@@ -11,30 +11,36 @@ def test_read_config():
     ini_path = os.path.join(here, 'config_files/simple_config.ini')
     config = IniConfigLoader(ini_path)
     expected = {
-        'application:main': {'use': 'package:FakeApp#basic_app'},
-        'application:egg': {'use': 'egg:FakeApp#other'},
-        'server:server_factory': {
-            'port': '42',
-            'use': 'egg:FakeApp#server_factory',
+        'application': {
+            DEFAULT: {'use': 'package:FakeApp#basic_app'},
+            'egg': {'use': 'egg:FakeApp#other'},
+            'filtered-app': {
+                'filter-with': 'filter',
+                'use': 'package:FakeApp#basic_app'
+            },
         },
-        'server:server_runner': {
-            'host': '127.0.0.1',
-            'use': 'egg:FakeApp#server_runner'
+        'filter': {
+            'filter': {
+                'method_to_call': 'lower',
+                'use': 'egg:FakeApp#caps'
+            },
+            'filter1': {
+                'filter-with': 'filter2',
+                'use': 'egg:FakeApp#caps'
+            },
+            'filter2': {
+                'use': 'egg:FakeApp#caps'
+            },
         },
-        'filter:filter': {
-            'method_to_call': 'lower',
-            'use': 'egg:FakeApp#caps'
-        },
-        'filter:filter1': {
-            'filter-with': 'filter2',
-            'use': 'egg:FakeApp#caps'
-        },
-        'filter:filter2': {
-            'use': 'egg:FakeApp#caps'
-        },
-        'app:filtered-app': {
-            'filter-with': 'filter',
-            'use': 'package:FakeApp#basic_app'
+        'server': {
+            'server_factory': {
+                'port': '42',
+                'use': 'egg:FakeApp#server_factory',
+            },
+            'server_runner': {
+                'host': '127.0.0.1',
+                'use': 'egg:FakeApp#server_runner'
+            },
         },
     }
     assert config.config() == expected

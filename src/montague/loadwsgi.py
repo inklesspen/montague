@@ -5,21 +5,27 @@ import pkg_resources
 from characteristic import attributes
 from .ini import IniConfigLoader
 from .vendor import reify
-from .structs import LoadableConfig, DEFAULT, Loadable
+from .structs import LoadableConfig, DEFAULT, Loadable, loadable_type_entry_points
 from .compat.util import lookup_object
 from .exceptions import ConfigNotFound
 
 
 scheme_loadable_types = {
     'application': 'app',
-    'app': 'app',
     'composite': 'composite',
-    'composit': 'composite',
     'server': 'server',
     'filter': 'filter',
-    'filter-app': 'filter',
-    'pipeline': 'pipeline',
 }
+
+
+class CompositeHelper(object):
+    def __init__(self, loader):
+        self.loader = loader
+
+    def get_app(self, name='main', global_conf=None):
+        if name == 'main':
+            name = DEFAULT
+        return self.loader.load_app(name, global_conf)
 
 
 @attributes(['path'], apply_with_init=False, apply_immutable=True)
@@ -42,23 +48,20 @@ class Loader(object):
 
     @reify
     def config(self):
-        return self.config_loader.ini_config()
+        return self.config_loader.config()
 
     def _fallback_config_loader(self, schemes, kind, name):
         _configs = []
-        true_name = name
-        if name is DEFAULT:
-            name = "main"
         for scheme in schemes:
-            key = ':'.join([scheme, name])
-            if key in self.config:
+            scheme_config = self.config.get(scheme, {})
+            if name in scheme_config:
                 loadable_type = scheme_loadable_types[scheme]
                 constructor = getattr(LoadableConfig, loadable_type)
                 _configs.append(constructor(
                     name=name,
-                    config=self.config[key]))
+                    config=scheme_config[name]))
         if len(_configs) == 0:
-            if true_name is DEFAULT:
+            if name is DEFAULT:
                 not_found = "the default {0}".format(kind)
             else:
                 not_found = "the {0} {1}".format(kind, name)
@@ -73,11 +76,7 @@ class Loader(object):
                 name = DEFAULT
             return self.config_loader.app_config(name)
         except NotImplementedError:
-            schemes = [
-                'application', 'app',
-                'composite', 'composit',
-                'filter-app', 'pipeline'
-            ]
+            schemes = ['application', 'composite']
             app_config = self._fallback_config_loader(schemes, 'application', name)
             return app_config
 
@@ -85,7 +84,8 @@ class Loader(object):
         # TODO: use decorator or something to preserve signatures
         if entry_point_group in ['paste.composite_factory', 'paste.composit_factory']:
             def adapter(global_conf, **local_conf):
-                return factory(self, global_conf, **local_conf)
+                helper = CompositeHelper(self)
+                return factory(helper, global_conf, **local_conf)
             return adapter
         if entry_point_group in ['paste.server_runner', 'paste.filter_app_factory']:
             def outer(global_conf, **local_conf):
@@ -113,55 +113,66 @@ class Loader(object):
     def _adapt_call_factory(self, factory, factory_type):
         # PasteDeploy assumes a call-type factory will meet the specification
         # for {type}_factory. That is, server_runner is not allowed.
-        if factory_type == 'composite':
+        if factory_type == 'paste.composite_factory':
             def adapter(global_conf, **local_conf):
-                return factory(self, global_conf, **local_conf)
+                helper = CompositeHelper(self)
+                return factory(helper, global_conf, **local_conf)
             return adapter
         return factory
 
     def _load_call_factory(self, resource, factory_type):
         return self._adapt_call_factory(lookup_object(resource), factory_type)
 
-    def _load_app_from_config(self, app_config, global_conf):
-        scheme, resource = app_config.config['use'].split(':', 1)
+    def _load_factory(self, location, factory_types):
+        scheme, resource = location.split(':', 1)
         if scheme in ('egg', 'package'):
-            factory = self._load_entry_point_factory(
-                resource, app_config.entry_point_groups)
+            factory = self._load_entry_point_factory(resource, factory_types)
         elif scheme == 'call':
-            factory = self._load_call_factory(resource, app_config.loadable_type)
+            factory_type = [f for f in factory_types if f.endswith('_factory')][0]
+            factory = self._load_call_factory(resource, factory_type)
+        elif scheme == 'config':
+            raise NotImplementedError("haven't implemented config delegation yet")
         else:
-            raise Exception('TODO: scheme type {}'.format(scheme))
+            raise NotImplementedError("assuming this is the 'import some code' type")
+        return factory
+
+    def _load_app_from_config(self, app_config, global_conf):
         local_conf = dict(app_config.config)
-        del local_conf['use']
-        filter_with = local_conf.pop('filter-with', None)
-        app_global_conf = global_conf
-        if global_conf is None:
-            app_global_conf = {}
-        app = factory(app_global_conf, **local_conf)
-        loadable = Loadable(loaded=app, is_app=True)
+        # resolve nested uses
+        use = local_conf.pop('use')
+        if ':' not in use:
+            loadable = self._load_app(use, global_conf)
+            loadable.local_conf.update(local_conf)
+            loadable.global_conf.update({})
+        else:
+            factory = self._load_factory(use, app_config.entry_point_groups)
+            app_global_conf = global_conf
+            if global_conf is None:
+                app_global_conf = {}
+            # TODO: change Loadable to take the factory here; a nested 'use'
+            # can override global and local conf
+            loadable = Loadable(factory=factory, is_app=True,
+                                global_conf=app_global_conf,
+                                local_conf=local_conf)
+        filter_with = loadable.local_conf.pop('filter-with', None)
+        loadable = loadable.normalize()
         if filter_with is not None:
             loadable.outer = self._load_filter(name=filter_with, global_conf=None)
         return loadable
 
     def _load_app(self, name, global_conf):
+        if name is not None and name is not DEFAULT and ':' in name:
+            # not a config section name, let's handle this
+            factory = self._load_factory(name, loadable_type_entry_points['app'])
+            loadable = Loadable(
+                factory=factory, global_conf=global_conf, local_conf={})
+            return loadable
         app_config = self.app_config(name)
-        is_app = (app_config.loadable_type in ['app', 'composite'])
-        if is_app:
-            return self._load_app_from_config(app_config, global_conf)
-        else:
-            if app_config.loadable_type == 'pipeline':
-                # pipline is its own special specialness
-                return self._load_pipeline_from_config(app_config, global_conf)
-            else:
-                # filter-app is loaded as an app, but actually is a filter.
-                return self._load_filter_from_config(app_config, global_conf)
+        return self._load_app_from_config(app_config, global_conf)
 
     def load_app(self, name=None, global_conf=None):
         loadable = self._load_app(name, global_conf)
         return loadable.normalize().get()
-
-    # Supports composite app pattern.
-    get_app = load_app
 
     def server_config(self, name=None):
         try:
@@ -199,67 +210,40 @@ class Loader(object):
             filter_config = self._fallback_config_loader(schemes, 'filter', name)
             return filter_config
 
-    def _load_pipeline_from_config(self, pipeline_config, global_conf):
-        items = pipeline_config.config['pipeline'].split()
-        pipeline = []
-        filters = items[:-1]
-        app = items[-1]
-        generated_name_counter = 0
-
-        for filter_spec in filters:
-            if ':' in filter_spec:
-                # scheme, resource pair
-                generated_name_counter += 1
-                name = 'pipeline-filter-{0}'.format(generated_name_counter)
-                filter_config = LoadableConfig.filter(
-                    name=name, config={'use': filter_spec})
-                pipeline.append(self._load_filter_from_config(
-                    filter_config, global_conf))
-            else:
-                pipeline.append(self._load_filter(filter_spec, global_conf))
-        if ':' in app:
-            name = 'pipeline-app'
-            app_config = LoadableConfig.app(name=name, config={'use': app})
-            pipeline.append(self._load_app_from_config(app_config, global_conf))
-        else:
-            pipeline.append(self._load_app(app, global_conf))
-
-        pipeline = [p.normalize() for p in pipeline]
-
-        root = pipeline.pop(0)
-        current = root
-        for item in pipeline:
-            while current.inner is not None:
-                current = current.inner
-            current.inner = item
-            current = item
-
-        return root
-
     def _load_filter_from_config(self, filter_config, global_conf):
-        scheme, resource = filter_config.config['use'].split(':', 1)
-        if scheme in ('egg', 'package'):
-            factory = self._load_entry_point_factory(
-                resource, filter_config.entry_point_groups)
-        elif scheme == 'call':
-            factory = self._load_call_factory(resource, filter_config.loadable_type)
-        else:
-            raise Exception('TODO: scheme type {}'.format(scheme))
         local_conf = dict(filter_config.config)
-        del local_conf['use']
-        filter_with = local_conf.pop('filter-with', None)
-        next = local_conf.pop('next', None)
-        if global_conf is None:
-            global_conf = {}
-        filter = factory(global_conf, **local_conf)
-        loadable = Loadable(loaded=filter)
+        # resolve nested uses
+        use = local_conf.pop('use')
+        if ':' not in use:
+            loadable = self._load_filter(use, global_conf)
+            loadable.local_conf.update(local_conf)
+            loadable.global_conf.update({})
+        else:
+            scheme, resource = filter_config.config['use'].split(':', 1)
+            if scheme in ('egg', 'package'):
+                factory = self._load_entry_point_factory(
+                    resource, filter_config.entry_point_groups)
+            elif scheme == 'call':
+                factory = self._load_call_factory(resource, filter_config.loadable_type)
+            else:
+                raise Exception('TODO: scheme type {}'.format(scheme))
+            if global_conf is None:
+                global_conf = {}
+            loadable = Loadable(
+                factory=factory, global_conf=global_conf, local_conf=local_conf)
+        filter_with = loadable.local_conf.pop('filter-with', None)
+        loadable = loadable.normalize()
         if filter_with is not None:
             loadable.outer = self._load_filter(name=filter_with, global_conf=None)
-        if next is not None:
-            loadable.inner = self._load_app(name=next, global_conf=None)
         return loadable
 
     def _load_filter(self, name, global_conf):
+        if name is not None and name is not DEFAULT and ':' in name:
+            # not a config section name, let's handle this
+            factory = self._load_factory(name, loadable_type_entry_points['filter'])
+            loadable = Loadable(
+                factory=factory, global_conf=global_conf, local_conf={})
+            return loadable
         filter_config = self.filter_config(name)
         return self._load_filter_from_config(filter_config, global_conf)
 

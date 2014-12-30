@@ -1,4 +1,5 @@
 import json
+import copy
 import six
 from montague.interfaces import IConfigLoader, IConfigLoaderFactory
 from montague.structs import LoadableConfig, DEFAULT
@@ -7,40 +8,12 @@ from zope.interface import directlyProvides, implementer
 
 
 @implementer(IConfigLoader)
-class JSONINIConfigLoader(object):
-    """This is the simplest possible config loader; it uses the naming and
-       structural conventions of standard ini files, simply providing JSON's
-       types. Therefore, it need do nothing aside from implement ini_config()
-       as simply parsing and returning the JSON data."""
-    directlyProvides(IConfigLoaderFactory)
-
-    def __init__(self, path):
-        self.path = path
-
-    def config(self):
-        return json.load(open(self.path))
-
-    def ini_config(self):
-        return self.config()
-
-    def app_config(self, name):
-        raise NotImplementedError
-
-    def server_config(self, name):
-        raise NotImplementedError
-
-    def filter_config(self, name):
-        raise NotImplementedError
-
-
-@implementer(IConfigLoader)
 class JSONConfigLoader(object):
-    """This is a more useful config loader. It uses a structural
+    """This is a sample config loader. It uses a structural
        convention that makes more sense for JSON; the root object
        contains 'application' and 'server' keys, which each contain keys
-       for the respective items. However, that means it must either
-       provide ini_config() or [app|server|filter]_config(); I chose to
-       do both."""
+       for the respective items. It has basically no error handling
+       and is kind of inefficient."""
     directlyProvides(IConfigLoaderFactory)
 
     def __init__(self, path):
@@ -51,17 +24,13 @@ class JSONConfigLoader(object):
         return json.load(open(self.path))
 
     def config(self):
-        return self._config
-
-    def ini_config(self):
-        retval = {}
-        for name, config in six.iteritems(self._config['application']):
-            retval[six.u('application:{0}'.format(name))] = config
-        for name, config in six.iteritems(self._config['server']):
-            retval[six.u('server:{0}'.format(name))] = config
-        for name, config in six.iteritems(self._config['filter']):
-            retval[six.u('filter:{0}'.format(name))] = config
-        return retval
+        config = {}
+        for section, vals in six.iteritems(self._config):
+            if 'main' in vals:
+                vals = copy.deepcopy(vals)
+                vals[DEFAULT] = vals.pop('main')
+            config[section] = vals
+        return config
 
     def app_config(self, name):
         if name is DEFAULT:
