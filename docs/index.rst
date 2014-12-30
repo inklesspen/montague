@@ -9,6 +9,7 @@ Contents:
    readme
    installation
    usage
+   config
    reference/index
    contributing
    authors
