@@ -24,25 +24,25 @@ loadable_type_entry_points = {
              'config', 'global_config'], apply_immutable=True)
 class LoadableConfig(object):
     @classmethod
-    def app(cls, name, config):
-        return cls(name=name, config=config, global_config={},
+    def app(cls, name, config, global_config):
+        return cls(name=name, config=config, global_config=global_config,
                    loadable_type='app',
                    entry_point_groups=loadable_type_entry_points['app'])
 
     @classmethod
-    def composite(cls, name, config):
+    def composite(cls, name, config, global_config):
         return cls(name=name, config=config, global_config={},
                    loadable_type='composite',
                    entry_point_groups=loadable_type_entry_points['composite'])
 
     @classmethod
-    def server(cls, name, config):
+    def server(cls, name, config, global_config):
         return cls(name=name, config=config, global_config={},
                    loadable_type='server',
                    entry_point_groups=loadable_type_entry_points['server'])
 
     @classmethod
-    def filter(cls, name, config):
+    def filter(cls, name, config, global_config):
         return cls(name=name, config=config, global_config={},
                    loadable_type='filter',
                    entry_point_groups=loadable_type_entry_points['filter'])
