@@ -38,13 +38,13 @@ class JSONConfigLoader(object):
         # Obviously this will throw a KeyError if the config isn't there.
         # A real implementation would have error handling here.
         config = self._config['application'][name]
-        return LoadableConfig.app(name=name, config=config)
+        return LoadableConfig.app(name=name, config=config, global_config={})
 
     def server_config(self, name):
         if name is DEFAULT:
             name = 'main'
         config = self._config['server'][name]
-        return LoadableConfig.server(name=name, config=config)
+        return LoadableConfig.server(name=name, config=config, global_config={})
 
     def filter_config(self, name):
         # Not covered in tests yet.

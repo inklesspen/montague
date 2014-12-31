@@ -8,9 +8,15 @@ here = os.path.dirname(__file__)
 
 
 def test_read_config():
-    ini_path = os.path.join(here, 'config_files/simple_config.ini')
+    ini_dir = os.path.join(here, 'config_files')
+    ini_path = os.path.join(ini_dir, 'simple_config.ini')
     config = IniConfigLoader(ini_path)
     expected = {
+        'globals': {
+            'here': ini_dir,
+            '__file__': ini_path,
+            'foo': 'bar',
+        },
         'application': {
             DEFAULT: {'use': 'package:FakeApp#basic_app'},
             'egg': {'use': 'egg:FakeApp#other'},

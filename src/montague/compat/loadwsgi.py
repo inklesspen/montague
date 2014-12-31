@@ -262,13 +262,11 @@ def loadapp(uri, name=None, **kw):
         loader = Loader(path)
 
         app_config = loader.app_config(name)
-        for key in app_config.config.keys():
-            if key.startswith('get ') or key.startswith('set '):
-                # stupid interaction with defaults, fall back
-                fallback = True
+        if app_config.config['use'].startswith('config'):
+            # The 'use' entry specifies another config file
+            fallback = True
         if not fallback:
-            global_conf = loader.config_loader.defaults
-            return loader.load_app(name, global_conf)
+            return loader.load_app(name)
 
     return loadobj(APP, uri, name=name, **kw)
 
@@ -290,13 +288,11 @@ def loadfilter(uri, name=None, **kw):
         loader = Loader(path)
 
         filter_config = loader.filter_config(name)
-        for key in filter_config.config.keys():
-            if key.startswith('get ') or key.startswith('set '):
-                # stupid interaction with defaults, fall back
-                fallback = True
+        if filter_config.config['use'].startswith('config'):
+            # The 'use' entry specifies another config file
+            fallback = True
         if not fallback:
-            global_conf = loader.config_loader.defaults
-            return loader.load_filter(name, global_conf)
+            return loader.load_filter(name)
 
     return loadobj(FILTER, uri, name=name, **kw)
 
@@ -318,13 +314,11 @@ def loadserver(uri, name=None, **kw):
         loader = Loader(path)
 
         server_config = loader.server_config(name)
-        for key in server_config.config.keys():
-            if key.startswith('get ') or key.startswith('set '):
-                # stupid interaction with defaults, fall back
-                fallback = True
+        if server_config.config['use'].startswith('config'):
+            # The 'use' entry specifies another config file
+            fallback = True
         if not fallback:
-            global_conf = loader.config_loader.defaults
-            return loader.load_server(name, global_conf)
+            return loader.load_server(name)
 
     return loadobj(SERVER, uri, name=name, **kw)
 
