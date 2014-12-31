@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-from collections import OrderedDict
 from .compat.loadwsgi import ConfigLoader as CompatConfigLoader
 from six.moves.configparser import InterpolationMissingOptionError
 from .interfaces import IConfigLoader, IConfigLoaderFactory
@@ -38,8 +37,7 @@ class IniConfigLoader(object):
         self._globals = parser.defaults()
         data = {}
         for section in parser.sections():
-            # Order matters for get/set overrides
-            section_data = data.setdefault(section, OrderedDict())
+            section_data = data.setdefault(section, {})
             for option in parser.options(section):
                 if option in self._globals:
                     continue
@@ -102,13 +100,21 @@ class IniConfigLoader(object):
         local_config = copy.deepcopy(local_config)
         # We're gonna modify the config; make a copy of the keys.
         keys = tuple(six.iterkeys(local_config))
+        add_to_globals = {}
+        get_from_globals = {}
         for key in keys:
             if key[:4] == 'get ':
                 global_key = local_config.pop(key)
-                local_config[key[4:]] = global_config[global_key]
+                get_from_globals[key[4:]] = global_key
+                # local_config[key[4:]] = global_config[global_key]
             elif key[:4] == 'set ':
                 new_val = local_config.pop(key)
-                global_config[key[4:]] = new_val
+                add_to_globals[key[4:]] = new_val
+                # global_config[key[4:]] = new_val
+        for global_key, new_value in six.iteritems(add_to_globals):
+            global_config[global_key] = new_value
+        for local_key, global_key in six.iteritems(get_from_globals):
+            local_config[local_key] = global_config[global_key]
         return constructor(name=name, config=local_config, global_config=global_config)
 
     def app_config(self, name):
