@@ -34,6 +34,11 @@ Montague provides functions to load WSGI apps and servers based on configuration
           
 * Free software: MIT license
 
+Status
+======
+
+Please be aware that Montague is currently pending a major reorganization.
+
 Installation
 ============
 
