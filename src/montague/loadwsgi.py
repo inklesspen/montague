@@ -6,7 +6,6 @@ from characteristic import attributes
 from .ini import IniConfigLoader
 from .vendor import reify
 from .structs import LoadableConfig, DEFAULT, Loadable, loadable_type_entry_points
-from .compat.util import lookup_object
 from .exceptions import ConfigNotFound
 
 
@@ -16,6 +15,20 @@ scheme_loadable_types = {
     'server': 'server',
     'filter': 'filter',
 }
+
+
+def lookup_object(spec):
+    """
+    Looks up a module or object from a some.module:func_name specification.
+    To just look up a module, omit the colon and everything after it.
+    """
+    parts, target = spec.split(':') if ':' in spec else (spec, None)
+    module = __import__(parts)
+
+    for part in parts.split('.')[1:] + ([target] if target else []):
+        module = getattr(module, part)
+
+    return module
 
 
 class CompositeHelper(object):

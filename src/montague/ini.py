@@ -1,14 +1,12 @@
 from __future__ import absolute_import
 
-from .compat.loadwsgi import ConfigLoader as CompatConfigLoader
-from six.moves.configparser import InterpolationMissingOptionError
+from six.moves.configparser import ConfigParser
 from .interfaces import IConfigLoader, IConfigLoaderFactory
 from zope.interface import directlyProvides, implementer
 from characteristic import attributes
-from .vendor import reify
 from .structs import DEFAULT, LoadableConfig
-import copy
 import six
+import os.path
 
 SCHEMEMAP = {
     'application': 'application',
@@ -29,11 +27,12 @@ class IniConfigLoader(object):
 
     def __init__(self, path):
         self.path = path
+        self._data = self._read()
+        self._config = self._process()
 
-    @reify
-    def _data(self):
-        loader = CompatConfigLoader(self.path)
-        parser = loader.parser
+    def _read(self):
+        parser = ConfigParser()
+        parser.read(self.path)
         self._globals = parser.defaults()
         data = {}
         for section in parser.sections():
@@ -41,17 +40,11 @@ class IniConfigLoader(object):
             for option in parser.options(section):
                 if option in self._globals:
                     continue
-                try:
-                    section_data[option] = parser.get(section, option)
-                except InterpolationMissingOptionError:
-                    # TODO, mark this as needing reinterpolation
-                    section_data[option] = parser.get(section, option, raw=True)
+                section_data[option] = parser.get(section, option)
         return data
 
-    @reify
-    def _config(self):
-        # We're going to be mutating the contents; better make a copy
-        orig = copy.deepcopy(self._data)
+    def _process(self):
+        orig = self._data
         config = {}
         for key in six.iterkeys(orig):
             if ':' in key:
@@ -62,7 +55,12 @@ class IniConfigLoader(object):
                 kind_config[name] = orig[key]
             else:
                 config[key] = orig[key]
-        config['globals'] = copy.deepcopy(self._globals)
+        config['globals'] = {
+            'here': os.path.dirname(self.path),
+            '__file__': self.path,
+        }
+        for key, value in six.iteritems(self._globals):
+            config['globals'][key] = value
         apps = config.setdefault('application', {})
         filters = config.setdefault('filter', {})
         generated_filter_count = 0
@@ -88,34 +86,8 @@ class IniConfigLoader(object):
                 last_item = filters[filter_name]
         return config
 
-    @reify
-    def defaults(self):
-        return self._config['globals']
-
     def config(self):
         return self._config
-
-    def _process_config(self, name, local_config, constructor):
-        global_config = copy.deepcopy(self._config['globals'])
-        local_config = copy.deepcopy(local_config)
-        # We're gonna modify the config; make a copy of the keys.
-        keys = tuple(six.iterkeys(local_config))
-        add_to_globals = {}
-        get_from_globals = {}
-        for key in keys:
-            if key[:4] == 'get ':
-                global_key = local_config.pop(key)
-                get_from_globals[key[4:]] = global_key
-                # local_config[key[4:]] = global_config[global_key]
-            elif key[:4] == 'set ':
-                new_val = local_config.pop(key)
-                add_to_globals[key[4:]] = new_val
-                # global_config[key[4:]] = new_val
-        for global_key, new_value in six.iteritems(add_to_globals):
-            global_config[global_key] = new_value
-        for local_key, global_key in six.iteritems(get_from_globals):
-            local_config[local_key] = global_config[global_key]
-        return constructor(name=name, config=local_config, global_config=global_config)
 
     def app_config(self, name):
         if name in self._config['application']:
@@ -126,7 +98,8 @@ class IniConfigLoader(object):
             local_config = self._config['composite'][name]
         else:
             raise KeyError
-        return self._process_config(name, local_config, constructor)
+        return constructor(
+            name=name, config=local_config, global_config=self._config['globals'])
 
     def server_config(self, name):
         if name in self._config['server']:
@@ -134,7 +107,8 @@ class IniConfigLoader(object):
             local_config = self._config['server'][name]
         else:
             raise KeyError
-        return self._process_config(name, local_config, constructor)
+        return constructor(
+            name=name, config=local_config, global_config=self._config['globals'])
 
     def filter_config(self, name):
         if name in self._config['filter']:
@@ -142,4 +116,5 @@ class IniConfigLoader(object):
             local_config = self._config['filter'][name]
         else:
             raise KeyError
-        return self._process_config(name, local_config, constructor)
+        return constructor(
+            name=name, config=local_config, global_config=self._config['globals'])
