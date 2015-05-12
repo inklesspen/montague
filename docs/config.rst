@@ -23,7 +23,7 @@ Config loaders must provide the methods listed in the :class:`montague.interface
 interface; it's recommended, though not required, that they actually
 implement the interface using :mod:`zope.interface`.
 
-Montauge Standard Format
+Montague Standard Format
 ------------------------
 
 The actual layout of your configuration information will obviously vary
