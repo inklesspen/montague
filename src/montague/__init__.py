@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from .loadwsgi import Loader
 
-__version__ = "0.1.0"
+__version__ = "0.1.5"
 
 
 def load_app(config_path, name=None):
