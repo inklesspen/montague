@@ -2,6 +2,17 @@
 Changelog
 =========
 
+unreleased
+-----------------------------------------
+
+* Remove the PasteDeploy FakeApp package in favor of ``montague_testapps``.
+* Enable a ``looponfail`` tox environment.
+
+0.1.5 (2015-05-12)
+-----------------------------------------
+
+* The legacy PasteDeploy support was spun off into a separate package (``montague_pastedeploy``), enabling simplicity.
+
 0.1.0 (2014-11-12)
 -----------------------------------------
 
