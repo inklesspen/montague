@@ -3,6 +3,7 @@ from montague.ini import IniConfigLoader
 from montague.loadwsgi import Loader
 from montague import load_app, load_server, load_filter
 from montague.structs import ComposedFilter, DEFAULT
+import montague_testapps
 
 here = os.path.dirname(__file__)
 
@@ -18,34 +19,34 @@ def test_read_config():
             'foo': 'bar',
         },
         'application': {
-            DEFAULT: {'use': 'package:FakeApp#basic_app'},
-            'egg': {'use': 'egg:FakeApp#other'},
+            DEFAULT: {'use': 'package:montague_testapps#basic_app'},
+            'egg': {'use': 'egg:montague_testapps#other'},
             'filtered-app': {
                 'filter-with': 'filter',
-                'use': 'package:FakeApp#basic_app'
+                'use': 'package:montague_testapps#basic_app'
             },
         },
         'filter': {
             'filter': {
                 'method_to_call': 'lower',
-                'use': 'egg:FakeApp#caps'
+                'use': 'egg:montague_testapps#caps'
             },
             'filter1': {
                 'filter-with': 'filter2',
-                'use': 'egg:FakeApp#caps'
+                'use': 'egg:montague_testapps#caps'
             },
             'filter2': {
-                'use': 'egg:FakeApp#caps'
+                'use': 'egg:montague_testapps#caps'
             },
         },
         'server': {
             'server_factory': {
                 'port': '42',
-                'use': 'egg:FakeApp#server_factory',
+                'use': 'egg:montague_testapps#server_factory',
             },
             'server_runner': {
                 'host': '127.0.0.1',
-                'use': 'egg:FakeApp#server_runner'
+                'use': 'egg:montague_testapps#server_runner'
             },
         },
     }
@@ -53,57 +54,57 @@ def test_read_config():
     assert Loader(ini_path).config == expected
 
 
-def test_load_app(fakeapp):
+def test_load_app():
     config_path = os.path.join(here, 'config_files/simple_config.ini')
     app = load_app(config_path)
     app2 = load_app(config_path, name='egg')
-    assert app is fakeapp.apps.basic_app
-    assert app2 is fakeapp.apps.basic_app2
+    assert app is montague_testapps.apps.basic_app
+    assert app2 is montague_testapps.apps.basic_app2
 
 
-def test_load_server(fakeapp):
+def test_load_server():
     config_path = os.path.join(here, 'config_files/simple_config.ini')
     server = load_server(config_path, name='server_factory')
-    actual = server(fakeapp.apps.basic_app)
+    actual = server(montague_testapps.apps.basic_app)
     assert actual.montague_conf['local_conf']['port'] == '42'
     resp = actual.get('/')
     assert b'This is basic app' == resp.body
     server = load_server(config_path, name='server_runner')
-    actual = server(fakeapp.apps.basic_app2)
+    actual = server(montague_testapps.apps.basic_app2)
     assert actual.montague_conf['local_conf']['host'] == '127.0.0.1'
     resp = actual.get('/')
     assert b'This is basic app2' == resp.body
 
 
-def test_load_filter(fakeapp):
+def test_load_filter():
     config_path = os.path.join(here, 'config_files/simple_config.ini')
     filter = load_filter(config_path, name='filter')
     app = filter(None)
-    assert isinstance(app, fakeapp.apps.CapFilter)
+    assert isinstance(app, montague_testapps.apps.CapFilter)
 
 
-def test_load_filtered_app(fakeapp):
+def test_load_filtered_app():
     config_path = os.path.join(here, 'config_files/simple_config.ini')
     app = load_app(config_path, name='filtered-app')
-    assert isinstance(app, fakeapp.apps.CapFilter)
-    assert app.app is fakeapp.apps.basic_app
+    assert isinstance(app, montague_testapps.apps.CapFilter)
+    assert app.app is montague_testapps.apps.basic_app
     assert app.method_to_call == 'lower'
 
 
-def test_load_layered_filter(fakeapp):
+def test_load_layered_filter():
     config_path = os.path.join(here, 'config_files/simple_config.ini')
     filter = load_filter(config_path, name='filter1')
     assert isinstance(filter, ComposedFilter)
-    app = filter(fakeapp.apps.basic_app)
-    assert app.app.app is fakeapp.apps.basic_app
-    assert isinstance(app, fakeapp.apps.CapFilter)
-    assert isinstance(app.app, fakeapp.apps.CapFilter)
+    app = filter(montague_testapps.apps.basic_app)
+    assert app.app.app is montague_testapps.apps.basic_app
+    assert isinstance(app, montague_testapps.apps.CapFilter)
+    assert isinstance(app.app, montague_testapps.apps.CapFilter)
 
 
-def test_filter_app(fakeapp):
+def test_filter_app():
     # Specifically the 'filter-app' config type
     config_path = os.path.join(here, 'config_files/filter_app.ini')
     app = load_app(config_path)
     assert app.method_to_call == 'lower'
     assert app.app.method_to_call == 'upper'
-    assert app.app.app is fakeapp.apps.basic_app
+    assert app.app.app is montague_testapps.apps.basic_app

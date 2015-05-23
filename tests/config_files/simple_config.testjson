@@ -1,29 +1,29 @@
 {
     "application": {
         "main": {
-            "use": "package:FakeApp#basic_app"
+            "use": "package:montague_testapps#basic_app"
         },
         "egg": {
-            "use": "egg:FakeApp#other"
+            "use": "egg:montague_testapps#other"
         },
         "filtered-app": {
-            "use": "package:FakeApp#basic_app",
+            "use": "package:montague_testapps#basic_app",
             "filter-with": "filter"
         }
     },
     "server": {
         "server_factory": {
-            "use": "egg:FakeApp#server_factory",
+            "use": "egg:montague_testapps#server_factory",
             "port": 42
         },
         "server_runner": {
-            "use": "egg:FakeApp#server_runner",
+            "use": "egg:montague_testapps#server_runner",
             "host": "127.0.0.1"
         }
     },
     "filter": {
         "filter": {
-            "use": "egg:FakeApp#caps",
+            "use": "egg:montague_testapps#caps",
             "method_to_call": "lower"
         }
     }
