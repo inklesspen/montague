@@ -4,7 +4,7 @@ import pytest
 from montague.ini import IniConfigLoader
 from montague.loadwsgi import Loader
 from montague import load_app, load_server, load_filter
-from montague.structs import ComposedFilter, DEFAULT
+from montague.structs import ComposedFilter
 import montague_testapps
 
 here = os.path.dirname(__file__)
@@ -21,7 +21,7 @@ def test_read_config():
             'foo': 'bar',
         },
         'application': {
-            DEFAULT: {'use': 'package:montague_testapps#basic_app'},
+            'main': {'use': 'package:montague_testapps#basic_app'},
             'egg': {'use': 'egg:montague_testapps#other'},
             'filtered-app': {
                 'filter-with': 'filter',

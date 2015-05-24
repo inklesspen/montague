@@ -5,7 +5,7 @@ import pkg_resources
 from characteristic import attributes
 from .ini import IniConfigLoader
 from .vendor import reify
-from .structs import LoadableConfig, DEFAULT, Loadable, loadable_type_entry_points
+from .structs import LoadableConfig, Loadable, loadable_type_entry_points
 from .exceptions import ConfigNotFound
 
 
@@ -36,8 +36,6 @@ class CompositeHelper(object):
         self.loader = loader
 
     def get_app(self, name='main', global_conf=None):
-        if name == 'main':
-            name = DEFAULT
         return self.loader.load_app(name)
 
 
@@ -76,10 +74,7 @@ class Loader(object):
                     config=scheme_config[name],
                     global_config=global_config))
         if len(_configs) == 0:
-            if name is DEFAULT:
-                not_found = "the default {0}".format(kind)
-            else:
-                not_found = "the {0} {1}".format(kind, name)
+            not_found = "the {0} {1}".format(kind, name)
             msg = "Unable to find the config for {0}".format(not_found)
             raise ConfigNotFound(msg)
         app_config = _configs[0]
@@ -88,7 +83,7 @@ class Loader(object):
     def app_config(self, name=None):
         try:
             if name is None:
-                name = DEFAULT
+                name = 'main'
             return self.config_loader.app_config(name)
         except NotImplementedError:
             schemes = ['application', 'composite']
@@ -171,7 +166,7 @@ class Loader(object):
         return loadable
 
     def _load_app(self, name):
-        if name is not None and name is not DEFAULT and ':' in name:
+        if name is not None and name is not 'main' and ':' in name:
             # not a config section name, let's handle this
             factory = self._load_factory(name, loadable_type_entry_points['app'])
             loadable = Loadable(
@@ -187,7 +182,7 @@ class Loader(object):
     def server_config(self, name=None):
         try:
             if name is None:
-                name = DEFAULT
+                name = 'main'
             return self.config_loader.server_config(name)
         except NotImplementedError:
             schemes = ['server']
@@ -211,7 +206,7 @@ class Loader(object):
     def filter_config(self, name=None):
         try:
             if name is None:
-                name = DEFAULT
+                name = 'main'
             return self.config_loader.filter_config(name)
         except NotImplementedError:
             schemes = ['filter']
@@ -246,7 +241,7 @@ class Loader(object):
         return loadable
 
     def _load_filter(self, name):
-        if name is not None and name is not DEFAULT and ':' in name:
+        if name is not None and name is not 'main' and ':' in name:
             # not a config section name, let's handle this
             factory = self._load_factory(name, loadable_type_entry_points['filter'])
             loadable = Loadable(
@@ -260,7 +255,7 @@ class Loader(object):
 
     def logging_config(self, name=None):
         if name is None:
-            name = DEFAULT
+            name = 'main'
         return self.config_loader.logging_config(name)
 
 

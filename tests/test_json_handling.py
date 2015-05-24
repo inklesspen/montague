@@ -4,7 +4,6 @@ import pkg_resources
 import mock
 from montague.loadwsgi import Loader
 from montague import load_app, load_server
-from montague.structs import DEFAULT
 import montague_testapps
 
 here = os.path.dirname(__file__)
@@ -39,7 +38,7 @@ def working_set():
 def test_read_config(working_set):
     expected = {
         'application': {
-            DEFAULT: {'use': 'package:montague_testapps#basic_app'},
+            'main': {'use': 'package:montague_testapps#basic_app'},
             'egg': {'use': 'egg:montague_testapps#other'},
             'filtered-app': {
                 'filter-with': 'filter',
