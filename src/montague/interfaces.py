@@ -11,8 +11,10 @@ class IConfigLoader(Interface):
     path = Attribute("""Location of config data. Usually will be a filesystem path,
                         but may be a URL, redis connection string, etc.""")
 
-    def logging_configuration():
-        """Provides a dict suitable for passing to logging.config.dictConfig."""
+    def logging_config(name):
+        """Provides a dict suitable for passing to logging.config.dictConfig.
+           It's possible a config loader may only support a single logging
+           config, which would be available under DEFAULT."""
 
     def config():
         """Returns the entire config as a dict in Montague standard format.

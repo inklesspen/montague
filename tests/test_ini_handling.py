@@ -1,4 +1,6 @@
 import os
+import sys
+import pytest
 from montague.ini import IniConfigLoader
 from montague.loadwsgi import Loader
 from montague import load_app, load_server, load_filter
@@ -108,3 +110,54 @@ def test_filter_app():
     assert app.method_to_call == 'lower'
     assert app.app.method_to_call == 'upper'
     assert app.app.app is montague_testapps.apps.basic_app
+
+
+def test_null_logging_config():
+    config_path = os.path.join(here, 'config_files/simple_config.ini')
+    loader = Loader(config_path)
+    with pytest.raises(KeyError):
+        loader.logging_config()
+
+
+def test_logging_config():
+    stream_key_name = 'stream' if (sys.version_info[0] > 2 or sys.version_info[1] > 6) else 'strm'
+    expected = {
+        'version': 1,
+        'root': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        },
+        'loggers': {
+            'simpleExample': {
+                'level': 'DEBUG',
+                'handlers': ['console'],
+                'propagate': False,
+            }
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': 'DEBUG',
+                'formatter': 'simple',
+                stream_key_name: sys.stdout,
+            }
+        },
+        'formatters': {
+            'simple': {
+                'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            },
+            'complicated': {
+                'format': 'F1 %(asctime)s %(levelname)s %(message)s',
+                'datefmt': '%a, %d %b %Y %H:%M:%S +0000',
+            },
+            'withclass': {
+                '()': 'foobar.FooBarClass',
+                'first': 'foo',
+                'second': 'bar',
+            },
+        },
+    }
+    config_path = os.path.join(here, 'config_files/logging.ini')
+    loader = Loader(config_path)
+    actual = loader.logging_config()
+    assert actual == expected
