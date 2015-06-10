@@ -258,6 +258,11 @@ class Loader(object):
     def load_filter(self, name=None):
         return self._load_filter(name).normalize().get()
 
+    def logging_config(self, name=None):
+        if name is None:
+            name = DEFAULT
+        return self.config_loader.logging_config(name)
+
 
 def _get_suffix(path):
     basename = os.path.basename(path)

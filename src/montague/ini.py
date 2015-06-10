@@ -1,10 +1,11 @@
 from __future__ import absolute_import
 
-from six.moves.configparser import ConfigParser
+from six.moves.configparser import SafeConfigParser, InterpolationError
 from .interfaces import IConfigLoader, IConfigLoaderFactory
 from zope.interface import directlyProvides, implementer
 from characteristic import attributes
 from .structs import DEFAULT, LoadableConfig
+from .logging import convert_loggers, convert_handlers, convert_formatters, combine
 import six
 import os.path
 
@@ -31,7 +32,7 @@ class IniConfigLoader(object):
         self._config = self._process()
 
     def _read(self):
-        parser = ConfigParser()
+        parser = SafeConfigParser()
         parser.read(self.path)
         self._globals = parser.defaults()
         data = {}
@@ -40,7 +41,10 @@ class IniConfigLoader(object):
             for option in parser.options(section):
                 if option in self._globals:
                     continue
-                section_data[option] = parser.get(section, option)
+                try:
+                    section_data[option] = parser.get(section, option)
+                except InterpolationError:
+                    section_data[option] = parser.get(section, option, raw=True)
         return data
 
     def _process(self):
@@ -118,3 +122,16 @@ class IniConfigLoader(object):
             raise KeyError
         return constructor(
             name=name, config=local_config, global_config=self._config['globals'])
+
+    def logging_config(self, name):
+        if name != DEFAULT:
+            raise KeyError
+        parser = SafeConfigParser()
+        parser.read(self.path)
+        for section_name in ('loggers', 'handlers', 'formatters'):
+            if not parser.has_section(section_name):
+                raise KeyError
+        loggers = convert_loggers(parser)
+        handlers = convert_handlers(parser)
+        formatters = convert_formatters(parser)
+        return combine(loggers, handlers, formatters)
