@@ -41,6 +41,11 @@ def test_handlers(ini_cp):
             'level': 'DEBUG',
             'formatter': 'simple',
             stream_key_name: sys.stdout,
+        },
+        'syslog': {
+            'class': 'logging.handlers.SysLogHandler',
+            'level': 'WARNING',
+            'formatter': 'complicated',
         }
     }
     actual = convert_handlers(ini_cp)

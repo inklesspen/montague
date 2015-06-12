@@ -140,6 +140,11 @@ def test_logging_config():
                 'level': 'DEBUG',
                 'formatter': 'simple',
                 stream_key_name: sys.stdout,
+            },
+            'syslog': {
+                'class': 'logging.handlers.SysLogHandler',
+                'level': 'WARNING',
+                'formatter': 'complicated',
             }
         },
         'formatters': {
