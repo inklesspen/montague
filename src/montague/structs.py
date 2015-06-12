@@ -5,13 +5,6 @@ from six.moves import zip as izip
 from characteristic import attributes, Attribute
 
 
-@attributes(['kind'], apply_immutable=True)
-class Sigil(object):
-    pass
-
-DEFAULT = Sigil(kind='loadable_config default')
-
-
 loadable_type_entry_points = {
     'app': ['paste.app_factory'],
     'composite': ['paste.composite_factory', 'paste.composit_factory'],

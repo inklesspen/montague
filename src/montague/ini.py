@@ -4,7 +4,7 @@ from six.moves.configparser import SafeConfigParser, InterpolationError
 from .interfaces import IConfigLoader, IConfigLoaderFactory
 from zope.interface import directlyProvides, implementer
 from characteristic import attributes
-from .structs import DEFAULT, LoadableConfig
+from .structs import LoadableConfig
 from .logging import convert_loggers, convert_handlers, convert_formatters, combine
 import six
 import os.path
@@ -54,8 +54,6 @@ class IniConfigLoader(object):
             if ':' in key:
                 scheme, name = key.split(':', 1)
                 kind_config = config.setdefault(SCHEMEMAP[scheme], {})
-                if name == 'main':
-                    name = DEFAULT
                 kind_config[name] = orig[key]
             else:
                 config[key] = orig[key]
@@ -124,7 +122,7 @@ class IniConfigLoader(object):
             name=name, config=local_config, global_config=self._config['globals'])
 
     def logging_config(self, name):
-        if name != DEFAULT:
+        if name != 'main':
             raise KeyError
         parser = SafeConfigParser()
         parser.read(self.path)
