@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import logging
+import logging.handlers
 import inspect
 
 
@@ -42,13 +43,10 @@ def _resolve(name):
 
 
 def adapt_args(args, name):
-    if hasattr(logging, name):
-        callable = getattr(logging, name)
-    else:
-        try:
-            callable = _resolve(name)
-        except ImportError:
-            raise ValueError("unable to locate {0}".format(name))
+    try:
+        callable = _resolve(name)
+    except ImportError:
+        raise ValueError("unable to locate {0}".format(name))
     if inspect.isclass(callable):
         callable = callable.__init__
         skipself = True
@@ -72,6 +70,7 @@ def convert_handlers(configparser):
     for name in names:
         items = configparser.items('handler_{0}'.format(name), raw=True)
         section = {}
+        args = tuple()
         for key, value in items:
             if key == 'args':
                 args = eval(value, vars(logging))
@@ -80,11 +79,14 @@ def convert_handlers(configparser):
                 klass = value
                 continue
             section[key] = value
-        if hasattr(logging, klass):
-            section['class'] = 'logging.{0}'.format(klass)
-        else:
+        try:
+            # check in the logging namespace first
+            eval(klass, vars(logging))
+        except (AttributeError, NameError):
             section['class'] = klass
-        section.update(adapt_args(args, klass))
+        else:
+            section['class'] = 'logging.{0}'.format(klass)
+        section.update(adapt_args(args, section['class']))
         retval[name] = section
     return retval
 

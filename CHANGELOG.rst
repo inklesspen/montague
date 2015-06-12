@@ -7,6 +7,7 @@ unreleased
 
 * Remove the PasteDeploy FakeApp package in favor of ``montague_testapps``.
 * Enable a ``looponfail`` tox environment.
+* Fix some eval-related bugs in the logging ini conversion.
 
 0.1.5 (2015-05-12)
 -----------------------------------------
