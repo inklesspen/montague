@@ -5,6 +5,7 @@ import mock
 from montague.loadwsgi import Loader
 from montague import load_app, load_server
 import montague_testapps
+import montague.testjson
 
 here = os.path.dirname(__file__)
 
@@ -18,8 +19,10 @@ def working_set():
     mock_ws = pkg_resources.WorkingSet()
     dist = pkg_resources.get_distribution('montague')
     mock_ep = pkg_resources.EntryPoint('json', 'montague.testjson', ['JSONConfigLoader'], dist=dist)
-    mock_dist = pkg_resources.Distribution(project_name='montague_testjson')
-    mock_dist.location = dist.location
+    mock_dist = pkg_resources.Distribution(project_name='montague_testjson', version='1.0')
+    # There's some weird bug on Windows where if montague isn't installed
+    # in develop mode, having mock_dist use dist's location won't work.
+    mock_dist.location = montague.testjson.__file__
     mock_dist._ep_map = {
         'montague.config_loader': {
             'json': mock_ep
