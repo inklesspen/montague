@@ -8,6 +8,7 @@ unreleased
 * Remove the PasteDeploy FakeApp package in favor of ``montague_testapps``.
 * Enable a ``looponfail`` tox environment.
 * Fix some eval-related bugs in the logging ini conversion.
+* Reincorporate the test JSON config loader, active only during tests.
 
 0.1.5 (2015-05-12)
 -----------------------------------------
