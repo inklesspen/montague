@@ -256,7 +256,10 @@ class Loader(object):
     def logging_config(self, name=None):
         if name is None:
             name = 'main'
-        return self.config_loader.logging_config(name)
+        try:
+            return self.config_loader.logging_config(name)
+        except NotImplementedError:
+            return self.config['logging'][name]
 
 
 def _get_suffix(path):

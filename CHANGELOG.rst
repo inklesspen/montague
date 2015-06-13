@@ -7,9 +7,10 @@ unreleased
 
 * Remove the PasteDeploy FakeApp package in favor of ``montague_testapps``.
 * Enable a ``looponfail`` tox environment.
-* Fix some eval-related bugs in the logging ini conversion.
+* Add logging ini conversion
 * Reincorporate the test JSON config loader, active only during tests.
 * Remove the ``DEFAULT`` sentinal value; we'll use 'main' as the default loadable name, just like grandpa used to do. This is a breaking change.
+* Add logging config to the Montague Standard Format.
 
 0.1.5 (2015-05-12)
 -----------------------------------------
