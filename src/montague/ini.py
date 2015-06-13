@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 
 from six.moves.configparser import SafeConfigParser, InterpolationError
-from .interfaces import IConfigLoader, IConfigLoaderFactory
-from zope.interface import directlyProvides, implementer
 from characteristic import attributes
 from .structs import LoadableConfig
 from .logging import convert_loggers, convert_handlers, convert_formatters, combine
@@ -22,9 +20,7 @@ SCHEMEMAP = {
 
 
 @attributes(['path'], apply_with_init=False, apply_immutable=True)
-@implementer(IConfigLoader)
 class IniConfigLoader(object):
-    directlyProvides(IConfigLoaderFactory)
 
     def __init__(self, path):
         self.path = path
