@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import json
-import six
 from montague.interfaces import IConfigLoader, IConfigLoaderFactory
 from montague.structs import LoadableConfig
 from zope.interface import directlyProvides, implementer
@@ -24,10 +23,7 @@ class JSONConfigLoader(object):
         return json.load(open(self.path))
 
     def config(self):
-        config = {}
-        for section, vals in six.iteritems(self._config):
-            config[section] = vals
-        return config
+        return self._config
 
     def app_config(self, name):
         # Obviously this will throw a KeyError if the config isn't there.
@@ -41,4 +37,8 @@ class JSONConfigLoader(object):
 
     def filter_config(self, name):
         # Not covered in tests yet.
+        raise NotImplementedError
+
+    def logging_config(self, name):
+        # montague should be able to load it from the .config() property.
         raise NotImplementedError

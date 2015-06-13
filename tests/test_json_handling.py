@@ -38,6 +38,30 @@ def working_set():
     patcher.stop()
 
 
+LOGGING_CONFIG = {
+    u'loggers': {
+        u'sqlalchemy.engine': {u'handlers': [], u'level': u'INFO'},
+        u'mimir': {u'handlers': [], u'level': u'DEBUG'}
+    },
+    u'version': 1,
+    u'root': {
+        u'handlers': [u'console'],
+        u'level': u'INFO'
+    },
+    u'formatters': {
+        u'generic': {u'format': u'%(asctime)s %(levelname)-5.5s [%(name)s][%(threadName)s] %(message)s'}
+    },
+    u'handlers': {
+        u'console': {
+            u'formatter': u'generic',
+            u'class': u'logging.StreamHandler',
+            u'stream': u'ext://sys.stderr',
+            u'level': u'NOTSET'
+        }
+    }
+}
+
+
 def test_read_config(working_set):
     expected = {
         'application': {
@@ -64,6 +88,7 @@ def test_read_config(working_set):
                 'host': '127.0.0.1',
             },
         },
+        'logging': {'main': LOGGING_CONFIG},
     }
     json_style_loader = Loader(os.path.join(here, 'config_files/simple_config.json'))
 
@@ -98,3 +123,10 @@ def test_load_filtered_app(working_set):
     assert isinstance(app, montague_testapps.apps.CapFilter)
     assert app.app is montague_testapps.apps.basic_app
     assert app.method_to_call == 'lower'
+
+
+def test_load_logging_config(working_set):
+    config_path = os.path.join(here, 'config_files/simple_config.json')
+    loader = Loader(config_path)
+    actual = loader.logging_config()
+    assert actual == LOGGING_CONFIG

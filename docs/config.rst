@@ -37,6 +37,7 @@ return a dict that looks like this: ::
         "composite": {},
         "filter": {},
         "server": {},
+        "logging": {},
     }
 
 Of course, the dict can contain other keys as well, but those are the
