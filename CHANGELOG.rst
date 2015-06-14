@@ -2,7 +2,7 @@
 Changelog
 =========
 
-unreleased
+0.2.0 (2015-06-14)
 -----------------------------------------
 
 * Remove the PasteDeploy FakeApp package in favor of ``montague_testapps``.
