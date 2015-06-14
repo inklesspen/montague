@@ -51,6 +51,8 @@ def test_read_config():
                 'use': 'egg:montague_testapps#server_runner'
             },
         },
+        'logging': {
+        },
     }
     assert config.config() == expected
     assert Loader(ini_path).config == expected

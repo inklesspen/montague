@@ -85,7 +85,7 @@ class Loader(object):
             if name is None:
                 name = 'main'
             return self.config_loader.app_config(name)
-        except NotImplementedError:
+        except (NotImplementedError, AttributeError):
             schemes = ['application', 'composite']
             app_config = self._fallback_config_loader(schemes, 'application', name)
             return app_config
@@ -184,7 +184,7 @@ class Loader(object):
             if name is None:
                 name = 'main'
             return self.config_loader.server_config(name)
-        except NotImplementedError:
+        except (NotImplementedError, AttributeError):
             schemes = ['server']
             server_config = self._fallback_config_loader(schemes, 'server', name)
             return server_config
@@ -208,7 +208,7 @@ class Loader(object):
             if name is None:
                 name = 'main'
             return self.config_loader.filter_config(name)
-        except NotImplementedError:
+        except (NotImplementedError, AttributeError):
             schemes = ['filter']
             filter_config = self._fallback_config_loader(schemes, 'filter', name)
             return filter_config
@@ -258,7 +258,7 @@ class Loader(object):
             name = 'main'
         try:
             return self.config_loader.logging_config(name)
-        except NotImplementedError:
+        except (NotImplementedError, AttributeError):
             return self.config['logging'][name]
 
 

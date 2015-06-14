@@ -4,7 +4,7 @@ import pkg_resources
 import mock
 from montague.loadwsgi import Loader
 from montague import load_app, load_server
-import montague_testapps
+import montague_testapps.apps
 import montague.testjson
 
 here = os.path.dirname(__file__)
