@@ -18,9 +18,14 @@ SCHEMEMAP = {
     'pipeline': 'pipeline'
 }
 
+LOGGING_SECTIONS = ('loggers', 'handlers', 'formatters')
+
 
 @attributes(['path'], apply_with_init=False, apply_immutable=True)
 class IniConfigLoader(object):
+    """This config loader transforms a traditional INI file into
+       a Montague Standard Format dictionary. It is compatible with
+       most but not all PasteDeploy files."""
 
     def __init__(self, path):
         self.path = path
@@ -28,19 +33,20 @@ class IniConfigLoader(object):
         self._config = self._process()
 
     def _read(self):
-        parser = SafeConfigParser()
-        parser.read(self.path)
-        self._globals = parser.defaults()
+        # We need to keep the parser around so the logging conversion can use it.
+        self._parser = SafeConfigParser()
+        self._parser.read(self.path)
+        self._globals = self._parser.defaults()
         data = {}
-        for section in parser.sections():
+        for section in self._parser.sections():
             section_data = data.setdefault(section, {})
-            for option in parser.options(section):
+            for option in self._parser.options(section):
                 if option in self._globals:
                     continue
                 try:
-                    section_data[option] = parser.get(section, option)
+                    section_data[option] = self._parser.get(section, option)
                 except InterpolationError:
-                    section_data[option] = parser.get(section, option, raw=True)
+                    section_data[option] = self._parser.get(section, option, raw=True)
         return data
 
     def _process(self):
@@ -82,12 +88,22 @@ class IniConfigLoader(object):
                 filters[filter_name] = {'use': use_filter}
                 last_item['filter-with'] = filter_name
                 last_item = filters[filter_name]
+        config['logging'] = {}
+        if all([self._parser.has_section(section_name) for section_name in LOGGING_SECTIONS]):
+            loggers = convert_loggers(self._parser)
+            handlers = convert_handlers(self._parser)
+            formatters = convert_formatters(self._parser)
+
+            config['logging']['main'] = combine(loggers, handlers, formatters)
         return config
 
     def config(self):
         return self._config
 
     def app_config(self, name):
+        # This method isn't actually necessary, since montague can extract
+        # the config information from the MSF dict returned by .config()
+        # but it's a nice example of how to do it.
         if name in self._config['application']:
             constructor = LoadableConfig.app
             local_config = self._config['application'][name]
@@ -118,14 +134,5 @@ class IniConfigLoader(object):
             name=name, config=local_config, global_config=self._config['globals'])
 
     def logging_config(self, name):
-        if name != 'main':
-            raise KeyError
-        parser = SafeConfigParser()
-        parser.read(self.path)
-        for section_name in ('loggers', 'handlers', 'formatters'):
-            if not parser.has_section(section_name):
-                raise KeyError
-        loggers = convert_loggers(parser)
-        handlers = convert_handlers(parser)
-        formatters = convert_formatters(parser)
-        return combine(loggers, handlers, formatters)
+        # This is provided by .config(), so no need to implement it here.
+        raise NotImplementedError
