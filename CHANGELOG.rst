@@ -12,6 +12,7 @@ unreleased
 * Remove the ``DEFAULT`` sentinal value; we'll use 'main' as the default loadable name, just like grandpa used to do. This is a breaking change.
 * Add logging config to the Montague Standard Format.
 * Allow config loaders to skip implementing ``app_config()`` and the like, instead of raising ``NotImplementedError``
+* Add validation functions to let config loaders test their compliance. These functions use assert statements, making them ideal for py.test, but they should work under unittest as well.
 
 0.1.5 (2015-05-12)
 -----------------------------------------

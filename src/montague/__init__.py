@@ -18,3 +18,8 @@ def load_server(config_path, name=None):
 def load_filter(config_path, name=None):
     loader = Loader(config_path)
     return loader.load_filter(name)
+
+
+def load_logging_config(config_path, name=None):
+    loader = Loader(config_path)
+    return loader.logging_config(name)

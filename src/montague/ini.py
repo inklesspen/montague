@@ -19,6 +19,7 @@ SCHEMEMAP = {
 }
 
 LOGGING_SECTIONS = ('loggers', 'handlers', 'formatters')
+MSF_KEYS = ('globals', 'application', 'composite', 'filter', 'server', 'logging')
 
 
 @attributes(['path'], apply_with_init=False, apply_immutable=True)
@@ -88,13 +89,15 @@ class IniConfigLoader(object):
                 filters[filter_name] = {'use': use_filter}
                 last_item['filter-with'] = filter_name
                 last_item = filters[filter_name]
-        config['logging'] = {}
         if all([self._parser.has_section(section_name) for section_name in LOGGING_SECTIONS]):
             loggers = convert_loggers(self._parser)
             handlers = convert_handlers(self._parser)
             formatters = convert_formatters(self._parser)
 
-            config['logging']['main'] = combine(loggers, handlers, formatters)
+            config['logging'] = {'main': combine(loggers, handlers, formatters)}
+
+        for key in MSF_KEYS:
+            config.setdefault(key, {})
         return config
 
     def config(self):
