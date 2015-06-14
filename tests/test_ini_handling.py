@@ -3,8 +3,9 @@ import sys
 import pytest
 from montague.ini import IniConfigLoader
 from montague.loadwsgi import Loader
-from montague import load_app, load_server, load_filter
+from montague import load_app, load_server, load_filter, load_logging_config
 from montague.structs import ComposedFilter
+from montague.validation import validate_montague_standard_format, validate_config_loader_methods
 import montague_testapps
 
 here = os.path.dirname(__file__)
@@ -28,6 +29,7 @@ def test_read_config():
                 'use': 'package:montague_testapps#basic_app'
             },
         },
+        'composite': {},
         'filter': {
             'filter': {
                 'method_to_call': 'lower',
@@ -165,6 +167,12 @@ def test_logging_config():
         },
     }
     config_path = os.path.join(here, 'config_files/logging.ini')
-    loader = Loader(config_path)
-    actual = loader.logging_config()
+    actual = load_logging_config(config_path)
     assert actual == expected
+
+
+def test_validity():
+    config_path = os.path.join(here, 'config_files/simple_config.ini')
+    config_loader = IniConfigLoader(config_path)
+    validate_montague_standard_format(config_loader.config())
+    validate_config_loader_methods(config_loader)

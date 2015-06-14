@@ -6,6 +6,7 @@ from montague.loadwsgi import Loader
 from montague import load_app, load_server
 import montague_testapps.apps
 import montague.testjson
+from montague.validation import validate_montague_standard_format, validate_config_loader_methods
 
 here = os.path.dirname(__file__)
 
@@ -64,6 +65,7 @@ LOGGING_CONFIG = {
 
 def test_read_config(working_set):
     expected = {
+        "globals": {},
         'application': {
             'main': {'use': 'package:montague_testapps#basic_app'},
             'egg': {'use': 'egg:montague_testapps#other'},
@@ -72,6 +74,7 @@ def test_read_config(working_set):
                 'use': 'package:montague_testapps#basic_app',
             },
         },
+        "composite": {},
         'filter': {
             'filter': {
                 'use': 'egg:montague_testapps#caps',
@@ -130,3 +133,10 @@ def test_load_logging_config(working_set):
     loader = Loader(config_path)
     actual = loader.logging_config()
     assert actual == LOGGING_CONFIG
+
+
+def test_validity(working_set):
+    loader = Loader(os.path.join(here, 'config_files/simple_config.json'))
+    config_loader = loader.config_loader
+    validate_montague_standard_format(config_loader.config())
+    validate_config_loader_methods(config_loader)
