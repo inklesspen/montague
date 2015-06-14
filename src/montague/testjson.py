@@ -1,19 +1,15 @@
 from __future__ import absolute_import
 
 import json
-from montague.interfaces import IConfigLoader, IConfigLoaderFactory
 from montague.structs import LoadableConfig
-from zope.interface import directlyProvides, implementer
 
 
-@implementer(IConfigLoader)
 class JSONConfigLoader(object):
     """This is a sample config loader. It uses a structural
        convention that makes more sense for JSON; the root object
        contains 'application' and 'server' keys, which each contain keys
        for the respective items. It has basically no error handling
        and is kind of inefficient."""
-    directlyProvides(IConfigLoaderFactory)
 
     def __init__(self, path):
         self.path = path
