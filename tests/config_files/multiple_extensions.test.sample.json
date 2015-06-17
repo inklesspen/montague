@@ -1,0 +1,12 @@
+{
+    "globals": {},
+    "application": {
+        "main": {
+            "use": "package:montague_testapps#basic_app"
+        }
+    },
+    "composite": {},
+    "server": {},
+    "filter": {},
+    "logging": {}
+}
