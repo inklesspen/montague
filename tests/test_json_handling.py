@@ -38,7 +38,7 @@ def test_read_config(working_set):
             'egg': {'use': 'egg:montague_testapps#other'},
             'filtered-app': {
                 'filter-with': 'filter',
-                'use': 'package:montague_testapps#basic_app',
+                'use': 'package:montague_testapps',
             },
         },
         "composite": {},
@@ -50,7 +50,7 @@ def test_read_config(working_set):
         },
         'server': {
             'server_factory': {
-                'use': 'egg:montague_testapps#server_factory',
+                'use': 'egg:montague_testapps',
                 'port': 42,
             },
             'server_runner': {

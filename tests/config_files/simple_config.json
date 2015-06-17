@@ -8,14 +8,14 @@
             "use": "egg:montague_testapps#other"
         },
         "filtered-app": {
-            "use": "package:montague_testapps#basic_app",
+            "use": "package:montague_testapps",
             "filter-with": "filter"
         }
     },
     "composite": {},
     "server": {
         "server_factory": {
-            "use": "egg:montague_testapps#server_factory",
+            "use": "egg:montague_testapps",
             "port": 42
         },
         "server_runner": {

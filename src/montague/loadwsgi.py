@@ -107,7 +107,10 @@ class Loader(object):
         return factory
 
     def _load_entry_point_factory(self, resource, entry_point_groups):
-        pkg, name = resource.split('#')
+        if "#" in resource:
+            pkg, name = resource.split('#')
+        else:
+            pkg, name = resource, "main"
         entry_point_map = pkg_resources.get_entry_map(pkg)
         factory = None
         for group in entry_point_groups:
