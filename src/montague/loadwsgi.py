@@ -47,7 +47,8 @@ class Loader(object):
 
     @staticmethod
     def _find_config_loader(config_path):
-        suffix = _get_suffix(config_path)
+        suffix = os.path.splitext(config_path)[1]  # returns ".ext"
+        suffix = suffix[1:]  # we just want "ext"
         entry_point_name = "montague.config_loader"
         eps = tuple(pkg_resources.iter_entry_points(entry_point_name, suffix))
         if len(eps) == 0:
@@ -260,8 +261,3 @@ class Loader(object):
             return self.config_loader.logging_config(name)
         except (NotImplementedError, AttributeError):
             return self.config['logging'][name]
-
-
-def _get_suffix(path):
-    basename = os.path.basename(path)
-    return ".".join(basename.split(".")[1:])
