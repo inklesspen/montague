@@ -8,6 +8,7 @@ unreleased
 * Removed zope.interface requirement, since the interfaces themselves were removed in 0.2.0.
 * Removed useless console_script entry point.
 * Changed loader detection to only consider the final extension in a filename.
+* Support and test egg specifications with no named entry point (because it's 'main').
 
 0.2.0 (2015-06-14)
 -----------------------------------------
