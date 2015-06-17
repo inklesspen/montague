@@ -2,6 +2,12 @@
 Changelog
 =========
 
+unreleased
+-----------------------------------------
+
+* Removed zope.interface requirement, since the interfaces themselves were removed in 0.2.0.
+* Removed useless console_script entry point.
+
 0.2.0 (2015-06-14)
 -----------------------------------------
 
