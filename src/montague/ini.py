@@ -35,6 +35,10 @@ class IniConfigLoader(object):
 
     def _read(self):
         # We need to keep the parser around so the logging conversion can use it.
+        path_defaults = {
+            'here': os.path.dirname(self.path),
+            '__file__': self.path,
+        }
         self._parser = SafeConfigParser()
         self._parser.read(self.path)
         self._globals = self._parser.defaults()
@@ -45,7 +49,7 @@ class IniConfigLoader(object):
                 if option in self._globals:
                     continue
                 try:
-                    section_data[option] = self._parser.get(section, option)
+                    section_data[option] = self._parser.get(section, option, vars=path_defaults)
                 except InterpolationError:
                     section_data[option] = self._parser.get(section, option, raw=True)
         return data

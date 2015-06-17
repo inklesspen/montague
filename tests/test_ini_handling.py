@@ -22,7 +22,11 @@ def test_read_config():
             'foo': 'bar',
         },
         'application': {
-            'main': {'use': 'package:montague_testapps#basic_app'},
+            'main': {
+                'use': 'package:montague_testapps#basic_app',
+                'ini_dir': ini_dir,
+                'ini_file': ini_path,
+            },
             'egg': {'use': 'egg:montague_testapps#other'},
             'filtered-app': {
                 'filter-with': 'filter',
