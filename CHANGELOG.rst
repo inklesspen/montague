@@ -2,7 +2,7 @@
 Changelog
 =========
 
-unreleased
+0.2.1 (2015-06-17)
 -----------------------------------------
 
 * Removed zope.interface requirement, since the interfaces themselves were removed in 0.2.0.
